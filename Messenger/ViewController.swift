@@ -8,6 +8,7 @@
 
 import UIKit
 
+
 class ViewController: UIViewController {
 
 
@@ -16,7 +17,11 @@ class ViewController: UIViewController {
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
-		// Do any additional setup after loading the view.
+		// let lines = resContents(name: "Text", ext: "txt")
 	}
 }
 
+
+private func resContents(name: String, ext: String) -> [String] {
+	return try! String(contentsOfFile: Bundle.main.path(forResource: name, ofType: ext)!, encoding: .utf8).components(separatedBy: .newlines)
+}

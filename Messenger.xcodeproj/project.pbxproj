@@ -13,7 +13,8 @@
 		3612145D22A85B7A000536A0 /* Messenger.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 3612145B22A85B7A000536A0 /* Messenger.xcdatamodeld */; };
 		3612145F22A85B7C000536A0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3612145E22A85B7C000536A0 /* Assets.xcassets */; };
 		3612146222A85B7C000536A0 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3612146022A85B7C000536A0 /* LaunchScreen.storyboard */; };
-		3612146A22A85DAD000536A0 /* Text.txt in Resources */ = {isa = PBXBuildFile; fileRef = 3612146922A85DAD000536A0 /* Text.txt */; };
+		3612146C22A85ED2000536A0 /* Text.txt in Resources */ = {isa = PBXBuildFile; fileRef = 3612146B22A85ED2000536A0 /* Text.txt */; };
+		3612147022A8644A000536A0 /* ConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3612146F22A8644A000536A0 /* ConversationView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,7 +26,8 @@
 		3612145E22A85B7C000536A0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3612146122A85B7C000536A0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		3612146322A85B7C000536A0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		3612146922A85DAD000536A0 /* Text.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Text.txt; sourceTree = "<group>"; };
+		3612146B22A85ED2000536A0 /* Text.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Text.txt; sourceTree = "<group>"; };
+		3612146F22A8644A000536A0 /* ConversationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -43,7 +45,6 @@
 			isa = PBXGroup;
 			children = (
 				3612145322A85B7A000536A0 /* Messenger */,
-				3612146922A85DAD000536A0 /* Text.txt */,
 				3612145222A85B7A000536A0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -59,13 +60,15 @@
 		3612145322A85B7A000536A0 /* Messenger */ = {
 			isa = PBXGroup;
 			children = (
-				3612145422A85B7A000536A0 /* AppDelegate.swift */,
+				3612146F22A8644A000536A0 /* ConversationView.swift */,
 				3612145622A85B7A000536A0 /* ViewController.swift */,
+				3612145422A85B7A000536A0 /* AppDelegate.swift */,
 				3612145822A85B7A000536A0 /* Main.storyboard */,
 				3612145E22A85B7C000536A0 /* Assets.xcassets */,
 				3612146022A85B7C000536A0 /* LaunchScreen.storyboard */,
 				3612146322A85B7C000536A0 /* Info.plist */,
 				3612145B22A85B7A000536A0 /* Messenger.xcdatamodeld */,
+				3612146B22A85ED2000536A0 /* Text.txt */,
 			);
 			path = Messenger;
 			sourceTree = "<group>";
@@ -131,7 +134,7 @@
 				3612146222A85B7C000536A0 /* LaunchScreen.storyboard in Resources */,
 				3612145F22A85B7C000536A0 /* Assets.xcassets in Resources */,
 				3612145A22A85B7A000536A0 /* Main.storyboard in Resources */,
-				3612146A22A85DAD000536A0 /* Text.txt in Resources */,
+				3612146C22A85ED2000536A0 /* Text.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -145,6 +148,7 @@
 				3612145722A85B7A000536A0 /* ViewController.swift in Sources */,
 				3612145522A85B7A000536A0 /* AppDelegate.swift in Sources */,
 				3612145D22A85B7A000536A0 /* Messenger.xcdatamodeld in Sources */,
+				3612147022A8644A000536A0 /* ConversationView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
