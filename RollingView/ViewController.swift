@@ -12,12 +12,17 @@ import UIKit
 class ViewController: UIViewController {
 
 
-	@IBOutlet weak var scrollView: UIScrollView!
+	@IBOutlet weak var rollingView: RollingView!
 
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		// let lines = resContents(name: "Text", ext: "txt")
+	}
+
+
+	@IBAction func addAction(_ sender: Any) {
+		rollingView.addSpace(toTop: 256)
 	}
 }
 

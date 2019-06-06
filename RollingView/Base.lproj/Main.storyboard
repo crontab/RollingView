@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
-    <device id="retina4_0" orientation="portrait">
+    <device id="retina5_9" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
@@ -13,26 +13,70 @@
         <!--View Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="Messenger" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="RollingView" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
-                        <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" alwaysBounceVertical="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YZi-QA-VKt" customClass="RollingView" customModule="Messenger" customModuleProvider="target">
-                                <rect key="frame" x="0.0" y="44" width="320" height="490"/>
-                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                            </scrollView>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="vfQ-jQ-uId">
+                                <rect key="frame" x="0.0" y="44" width="375" height="734"/>
+                                <subviews>
+                                    <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="zfX-Wb-WJC" customClass="RollingView" customModule="RollingView" customModuleProvider="target">
+                                        <rect key="frame" x="0.0" y="0.0" width="375" height="685"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    </view>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="bRq-Ry-shQ">
+                                        <rect key="frame" x="0.0" y="685" width="375" height="49"/>
+                                        <subviews>
+                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="3af-FT-S5t">
+                                                <rect key="frame" x="265" y="0.0" width="110" height="49"/>
+                                                <constraints>
+                                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="110" id="wuS-az-ynE"/>
+                                                </constraints>
+                                                <state key="normal" title="Add more"/>
+                                                <connections>
+                                                    <action selector="addAction:" destination="BYZ-38-t0r" eventType="touchUpInside" id="8f9-HN-6uE"/>
+                                                </connections>
+                                            </button>
+                                        </subviews>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <constraints>
+                                            <constraint firstAttribute="bottom" secondItem="3af-FT-S5t" secondAttribute="bottom" id="374-rv-wpq"/>
+                                            <constraint firstAttribute="height" constant="49" id="4U5-cN-vMc"/>
+                                            <constraint firstItem="3af-FT-S5t" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="bRq-Ry-shQ" secondAttribute="leading" id="Hvr-dr-iG4"/>
+                                            <constraint firstAttribute="trailing" secondItem="3af-FT-S5t" secondAttribute="trailing" id="LHb-iu-BCJ"/>
+                                            <constraint firstItem="3af-FT-S5t" firstAttribute="top" secondItem="bRq-Ry-shQ" secondAttribute="top" id="VJL-dk-4M8"/>
+                                        </constraints>
+                                    </view>
+                                </subviews>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <constraints>
+                                    <constraint firstItem="bRq-Ry-shQ" firstAttribute="top" secondItem="zfX-Wb-WJC" secondAttribute="bottom" id="0Zp-PU-ATt"/>
+                                    <constraint firstItem="bRq-Ry-shQ" firstAttribute="leading" secondItem="vfQ-jQ-uId" secondAttribute="leading" id="2cP-E1-uJO"/>
+                                    <constraint firstAttribute="trailing" secondItem="zfX-Wb-WJC" secondAttribute="trailing" id="IFj-1I-4YC"/>
+                                    <constraint firstItem="zfX-Wb-WJC" firstAttribute="top" secondItem="vfQ-jQ-uId" secondAttribute="top" id="WzJ-Kh-fhm"/>
+                                    <constraint firstAttribute="bottom" secondItem="bRq-Ry-shQ" secondAttribute="bottom" id="dMb-Zc-far"/>
+                                    <constraint firstAttribute="trailing" secondItem="bRq-Ry-shQ" secondAttribute="trailing" id="pFB-rz-A3J"/>
+                                    <constraint firstItem="zfX-Wb-WJC" firstAttribute="leading" secondItem="vfQ-jQ-uId" secondAttribute="leading" id="vAQ-jR-ZW3"/>
+                                </constraints>
+                            </view>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstItem="vfQ-jQ-uId" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="HHd-nf-FWY"/>
+                            <constraint firstItem="vfQ-jQ-uId" firstAttribute="bottom" secondItem="6Tk-OE-BBY" secondAttribute="bottom" id="YJi-K1-beI"/>
+                            <constraint firstItem="vfQ-jQ-uId" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="dbO-HY-2hQ"/>
+                            <constraint firstItem="vfQ-jQ-uId" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="tRC-4s-tbF"/>
+                        </constraints>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
                     <connections>
-                        <outlet property="scrollView" destination="YZi-QA-VKt" id="kG2-Vi-Ewl"/>
+                        <outlet property="rollingView" destination="zfX-Wb-WJC" id="jpc-bh-Jnw"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="137.68115942028987" y="126.5625"/>
+            <point key="canvasLocation" x="136.80000000000001" y="126.35467980295567"/>
         </scene>
     </scenes>
 </document>
