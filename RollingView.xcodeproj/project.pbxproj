@@ -10,24 +10,22 @@
 		3612145522A85B7A000536A0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3612145422A85B7A000536A0 /* AppDelegate.swift */; };
 		3612145722A85B7A000536A0 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3612145622A85B7A000536A0 /* ViewController.swift */; };
 		3612145A22A85B7A000536A0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3612145822A85B7A000536A0 /* Main.storyboard */; };
-		3612145D22A85B7A000536A0 /* Messenger.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 3612145B22A85B7A000536A0 /* Messenger.xcdatamodeld */; };
 		3612145F22A85B7C000536A0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3612145E22A85B7C000536A0 /* Assets.xcassets */; };
 		3612146222A85B7C000536A0 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3612146022A85B7C000536A0 /* LaunchScreen.storyboard */; };
 		3612146C22A85ED2000536A0 /* Text.txt in Resources */ = {isa = PBXBuildFile; fileRef = 3612146B22A85ED2000536A0 /* Text.txt */; };
-		3612147022A8644A000536A0 /* ConversationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3612146F22A8644A000536A0 /* ConversationView.swift */; };
+		3612147022A8644A000536A0 /* RollingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3612146F22A8644A000536A0 /* RollingView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		3612145122A85B7A000536A0 /* Messenger.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Messenger.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3612145122A85B7A000536A0 /* RollingView.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RollingView.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3612145422A85B7A000536A0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		3612145622A85B7A000536A0 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		3612145922A85B7A000536A0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		3612145C22A85B7A000536A0 /* Messenger.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Messenger.xcdatamodel; sourceTree = "<group>"; };
 		3612145E22A85B7C000536A0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3612146122A85B7C000536A0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		3612146322A85B7C000536A0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		3612146B22A85ED2000536A0 /* Text.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Text.txt; sourceTree = "<group>"; };
-		3612146F22A8644A000536A0 /* ConversationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationView.swift; sourceTree = "<group>"; };
+		3612146F22A8644A000536A0 /* RollingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RollingView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,7 +42,7 @@
 		3612144822A85B7A000536A0 = {
 			isa = PBXGroup;
 			children = (
-				3612145322A85B7A000536A0 /* Messenger */,
+				3612145322A85B7A000536A0 /* RollingView */,
 				3612145222A85B7A000536A0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -52,33 +50,32 @@
 		3612145222A85B7A000536A0 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				3612145122A85B7A000536A0 /* Messenger.app */,
+				3612145122A85B7A000536A0 /* RollingView.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		3612145322A85B7A000536A0 /* Messenger */ = {
+		3612145322A85B7A000536A0 /* RollingView */ = {
 			isa = PBXGroup;
 			children = (
-				3612146F22A8644A000536A0 /* ConversationView.swift */,
+				3612146F22A8644A000536A0 /* RollingView.swift */,
 				3612145622A85B7A000536A0 /* ViewController.swift */,
 				3612145422A85B7A000536A0 /* AppDelegate.swift */,
 				3612145822A85B7A000536A0 /* Main.storyboard */,
 				3612145E22A85B7C000536A0 /* Assets.xcassets */,
 				3612146022A85B7C000536A0 /* LaunchScreen.storyboard */,
 				3612146322A85B7C000536A0 /* Info.plist */,
-				3612145B22A85B7A000536A0 /* Messenger.xcdatamodeld */,
 				3612146B22A85ED2000536A0 /* Text.txt */,
 			);
-			path = Messenger;
+			path = RollingView;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		3612145022A85B7A000536A0 /* Messenger */ = {
+		3612145022A85B7A000536A0 /* RollingView */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 3612146622A85B7C000536A0 /* Build configuration list for PBXNativeTarget "Messenger" */;
+			buildConfigurationList = 3612146622A85B7C000536A0 /* Build configuration list for PBXNativeTarget "RollingView" */;
 			buildPhases = (
 				3612144D22A85B7A000536A0 /* Sources */,
 				3612144E22A85B7A000536A0 /* Frameworks */,
@@ -88,9 +85,9 @@
 			);
 			dependencies = (
 			);
-			name = Messenger;
-			productName = Messenger;
-			productReference = 3612145122A85B7A000536A0 /* Messenger.app */;
+			name = RollingView;
+			productName = RollingView;
+			productReference = 3612145122A85B7A000536A0 /* RollingView.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -108,7 +105,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 3612144C22A85B7A000536A0 /* Build configuration list for PBXProject "Messenger" */;
+			buildConfigurationList = 3612144C22A85B7A000536A0 /* Build configuration list for PBXProject "RollingView" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -121,7 +118,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				3612145022A85B7A000536A0 /* Messenger */,
+				3612145022A85B7A000536A0 /* RollingView */,
 			);
 		};
 /* End PBXProject section */
@@ -147,8 +144,7 @@
 			files = (
 				3612145722A85B7A000536A0 /* ViewController.swift in Sources */,
 				3612145522A85B7A000536A0 /* AppDelegate.swift in Sources */,
-				3612145D22A85B7A000536A0 /* Messenger.xcdatamodeld in Sources */,
-				3612147022A8644A000536A0 /* ConversationView.swift in Sources */,
+				3612147022A8644A000536A0 /* RollingView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -296,12 +292,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 639KEQWW6F;
-				INFOPLIST_FILE = Messenger/Info.plist;
+				INFOPLIST_FILE = RollingView/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.melikyan.Messenger;
+				PRODUCT_BUNDLE_IDENTIFIER = com.melikyan.RollingView;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -314,12 +310,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 639KEQWW6F;
-				INFOPLIST_FILE = Messenger/Info.plist;
+				INFOPLIST_FILE = RollingView/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.melikyan.Messenger;
+				PRODUCT_BUNDLE_IDENTIFIER = com.melikyan.RollingView;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -329,7 +325,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		3612144C22A85B7A000536A0 /* Build configuration list for PBXProject "Messenger" */ = {
+		3612144C22A85B7A000536A0 /* Build configuration list for PBXProject "RollingView" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				3612146422A85B7C000536A0 /* Debug */,
@@ -338,7 +334,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		3612146622A85B7C000536A0 /* Build configuration list for PBXNativeTarget "Messenger" */ = {
+		3612146622A85B7C000536A0 /* Build configuration list for PBXNativeTarget "RollingView" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				3612146722A85B7C000536A0 /* Debug */,
@@ -348,19 +344,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCVersionGroup section */
-		3612145B22A85B7A000536A0 /* Messenger.xcdatamodeld */ = {
-			isa = XCVersionGroup;
-			children = (
-				3612145C22A85B7A000536A0 /* Messenger.xcdatamodel */,
-			);
-			currentVersion = 3612145C22A85B7A000536A0 /* Messenger.xcdatamodel */;
-			path = Messenger.xcdatamodeld;
-			sourceTree = "<group>";
-			versionGroupType = wrapper.xcdatamodel;
-		};
-/* End XCVersionGroup section */
 	};
 	rootObject = 3612144922A85B7A000536A0 /* Project object */;
 }

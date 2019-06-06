@@ -1,5 +1,5 @@
 //
-//  ConversationView.swift
+//  RollingView.swift
 //  Messenger
 //
 //  Created by Hovik Melikyan on 05/06/2019.
@@ -16,25 +16,14 @@ class TiledLayer: CATiledLayer {
 }
 
 
-class ConversationContent: UIView {
-
-	private var tiledLayer: TiledLayer!
+class RollingContentView: UIView {
 
 	override class var layerClass: AnyClass {
 		return TiledLayer.self
 	}
 
-	override init(frame: CGRect) {
-		super.init(frame: frame)
-		tiledLayer = (layer as! TiledLayer)
-		tiledLayer.tileSize = CGSize(width: frame.size.width, height: 256)
-	}
-
-	required init?(coder aDecoder: NSCoder) {
-		fatalError("init(coder:) has not been implemented")
-	}
-
 	override func draw(_ layer: CALayer, in context: CGContext) {
+		let tiledLayer = (layer as! TiledLayer)
 		let box = context.boundingBoxOfClipPath
 
 		let tileSize = tiledLayer.tileSize
@@ -45,7 +34,7 @@ class ConversationContent: UIView {
 		context.fill(box.insetBy(dx: 0, dy: 0))
 
 		UIGraphicsPushContext(context)
-		let font = UIFont(name: "CourierNewPS-BoldMT", size: 16)!
+		let font = UIFont(name: "CourierNewPS-BoldMT", size: 12)!
 		let string = String(format: "[%d, %d]", Int(x), Int(y))
 		let a = NSAttributedString(string: string, attributes: [.font: font, .foregroundColor: UIColor.black])
 		a.draw(at: CGPoint(x: box.origin.x + 1, y: box.origin.y + font.pointSize + 1))
@@ -54,21 +43,31 @@ class ConversationContent: UIView {
 }
 
 
-class ConversationView: UIScrollView {
+class RollingView: UIScrollView, UIScrollViewDelegate {
 
-	private var contentView: ConversationContent!
+	private var contentView: RollingContentView!
+	private var ceiling: CGFloat = 0
 
 	override func awakeFromNib() {
 		super.awakeFromNib()
-		contentView = ConversationContent(frame: CGRect(x: 0, y: 0, width: bounds.size.width, height: 10000))
-		contentView.backgroundColor = UIColor(white: 0.8, alpha: 1)
-		contentView.autoresizingMask = .flexibleWidth
-		insertSubview(contentView, at: 0)
 	}
+
 
 	override func layoutSubviews() {
 		super.layoutSubviews()
-		contentSize = contentView.frame.size
+		if contentView == nil {
+			setupContentView()
+		}
 	}
 
+
+	private func setupContentView() {
+		contentView = RollingContentView(frame: CGRect(x: 0, y: 0, width: bounds.size.width, height: 100_000_000))
+		contentView.autoresizingMask = .flexibleWidth
+		insertSubview(contentView, at: 0)
+		contentSize = contentView.frame.size
+		ceiling = contentView.frame.size.height / 2
+		setContentOffset(CGPoint(x: 0, y: ceiling), animated: false)
+		delegate = self
+	}
 }
