@@ -22,7 +22,7 @@ class ViewController: UIViewController {
 
 
 	@IBAction func addAction(_ sender: Any) {
-		rollingView.addSpace(toTop: 256)
+		rollingView.addSpace(above: 256)
 	}
 }
 
