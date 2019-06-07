@@ -149,7 +149,7 @@ class RollingView: UIScrollView {
 	func addSpace(above height: CGFloat) {
 		contentView.frame.origin.y += height
 		contentSize.height += height
-		setContentOffset(CGPoint(x: contentOffset.x, y: contentOffset.y + height), animated: false)
+		contentOffset = CGPoint(x: contentOffset.x, y: contentOffset.y + height)
 		contentView.layer.setNeedsDisplay(CGRect(x: 0, y: contentView.frame.origin.y - height, width: contentView.bounds.size.width, height: height))
 	}
 }
