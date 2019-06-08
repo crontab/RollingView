@@ -10,14 +10,14 @@ import UIKit
 
 
 protocol RollingViewDelegate {
-	func rollingView(_ rollingView: RollingView, cellLayerForIndex: Int) -> CALayer
+	func rollingView(_ rollingView: RollingView, cellLayerForIndex index: Int) -> CALayer
 }
 
 
 
 class RollingView: UIScrollView {
 
-	enum Edge {
+	enum Edge: Int {
 		case top
 		case bottom
 	}
@@ -27,7 +27,20 @@ class RollingView: UIScrollView {
 
 
 	func addCells(_ edge: Edge, count: Int) {
-		// TODO:
+		var start: Int
+		switch edge {
+		case .top:
+			start = startIndex - count
+			startIndex = start
+		case .bottom:
+			start = endIndex
+			endIndex += count
+		}
+		let layers = (start..<(start + count)).map { (index) -> CALayer in
+			let layer = rollingViewDelegate?.rollingView(self, cellLayerForIndex: index) ?? CALayer()
+			return layer
+		}
+		contentView.addLayers(to: edge, layers: layers)
 	}
 
 
@@ -35,6 +48,10 @@ class RollingView: UIScrollView {
 
 	private var contentView: RollingContentView!
 	private var firstLayout = true
+
+	// This is redundant, but we keep it here so as not to bother with async access to RollingContentView's internal data
+	private var startIndex = 0
+	private var endIndex = 0
 
 
 	override init(frame: CGRect) {
@@ -61,18 +78,21 @@ class RollingView: UIScrollView {
 		super.layoutSubviews()
 		if firstLayout {
 			firstLayout = false
-			contentSize = bounds.size
+			contentSize = CGSize(width: bounds.width, height: 0)
 		}
 	}
 
 
 	fileprivate func contentDidAddSpace(edge: Edge, height: CGFloat) {
 		contentSize.height += height
-		switch edge {
-		case .top:
-			contentOffset.y += height
-		case .bottom:
-			break
+		if edge == .top {
+			if contentSize.height < bounds.height {
+				// TODO:
+				setContentOffset(CGPoint(x: 0, y: 0), animated: true)
+			}
+			else {
+				contentOffset.y += height
+			}
 		}
 	}
 }
@@ -121,16 +141,73 @@ private class RollingContentView: UIView {
 	}
 
 
+	fileprivate func addLayers(to edge: RollingView.Edge, layers: [CALayer]) {
+		queue.async {
+			var unionFrame: CGRect?
+
+			switch edge {
+
+			case .top:
+				var newYCoordinates: [CGFloat] = []
+				var y: CGFloat = self.yCoordinates.first ?? self.masterOffset
+				for layer in layers.reversed() {
+					let layerHeight = layer.frame.height
+					y -= layerHeight
+					layer.frame.top = y
+					self.layerCache[y as NSNumber] = layer
+					newYCoordinates.append(y)
+					if let u = unionFrame {
+						unionFrame = u.union(layer.frame)
+					}
+					else {
+						unionFrame = layer.frame
+					}
+				}
+				self.frame.top += (self.yCoordinates.first ?? self.masterOffset) - y
+				self.yCoordinates.insert(contentsOf: newYCoordinates.reversed(), at: 0)
+
+			case .bottom:
+				for layer in layers {
+					let layerHeight = layer.frame.height
+					layer.frame.top = self.bottom
+					self.layerCache[self.bottom as NSNumber] = layer
+					self.yCoordinates.append(self.bottom)
+					self.bottom += layerHeight
+					if let u = unionFrame {
+						unionFrame = u.union(layer.frame)
+					}
+					else {
+						unionFrame = layer.frame
+					}
+				}
+			}
+
+			if let unionFrame = unionFrame {
+				DispatchQueue.main.async {
+					self.hostView.contentDidAddSpace(edge: edge, height: unionFrame.height)
+					self.setNeedsDisplay(unionFrame)
+				}
+			}
+		}
+	}
+
+
 	override func draw(_ layer: CALayer, in context: CGContext) {
 		// let bgColor = (self.bgColor ?? UIColor.white).cgColor
 		let box = context.boundingBoxOfClipPath
 
+		context.translateBy(x: 0, y: CONTENT_HEIGHT)
+		context.scaleBy(x: 1, y: -1)
+
 		// TODO: fill empty spaces above and below layers with bgColor
 		var index = yCoordinates.binarySearch(box.top)
+		if index > 0 {
+			index -= 1
+		}
 		if index < yCoordinates.count {
 			let endY = min(bottom, box.top + box.height)
 			var layerY = yCoordinates[index]
-			repeat {
+			while layerY < endY {
 				if let layer = layerCache[layerY as NSNumber] {
 					layer.render(in: context)
 				}
@@ -139,7 +216,7 @@ private class RollingContentView: UIView {
 				}
 				index += 1
 				layerY = index < yCoordinates.count ? yCoordinates[index] : endY
-			} while layerY < endY
+			}
 		}
 
 		#if DEBUG
@@ -154,43 +231,5 @@ private class RollingContentView: UIView {
 			a.draw(at: CGPoint(x: box.left + 1, y: box.top + 1))
 			UIGraphicsPopContext()
 		#endif
-	}
-
-
-	fileprivate func addLayers(to edge: RollingView.Edge, layers: [CALayer]) {
-		queue.async {
-			var totalHeight: CGFloat = 0
-
-			switch edge {
-
-			case .top:
-				var newYCoordinates: [CGFloat] = []
-				var y: CGFloat = self.yCoordinates.first ?? self.masterOffset
-				for layer in layers.reversed() {
-					let layerHeight = layer.frame.height
-					totalHeight += layerHeight
-					y -= layerHeight
-					layer.frame.top = y
-					self.layerCache[y as NSNumber] = layer
-					newYCoordinates.append(y)
-				}
-				self.frame.top += (self.yCoordinates.first ?? self.masterOffset) - y
-				self.yCoordinates.insert(contentsOf: newYCoordinates.reversed(), at: 0)
-
-			case .bottom:
-				for layer in layers {
-					let layerHeight = layer.frame.height
-					totalHeight += layerHeight
-					layer.frame.top = self.bottom
-					self.layerCache[self.bottom as NSNumber] = layer
-					self.yCoordinates.append(self.bottom)
-					self.bottom += layerHeight
-				}
-			}
-
-			DispatchQueue.main.async {
-				self.hostView.contentDidAddSpace(edge: edge, height: totalHeight)
-			}
-		}
 	}
 }

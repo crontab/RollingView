@@ -22,6 +22,26 @@ class MessageBubble: UIView {
 
 class MessageBubbleView: UIView {
 
+	enum Side {
+		case left
+		case right
+
+		var flipped: Side {
+			switch self {
+			case .left: return .right
+			case .right: return .left
+			}
+		}
+
+		fileprivate var storyboardId: String {
+			switch self {
+			case .left: return "LeftBubble"
+			case .right: return "RightBubble"
+			}
+		}
+	}
+
+
 	var text: String? {
 		get { return textLabel.text }
 		set { textLabel.text = newValue }
@@ -34,10 +54,10 @@ class MessageBubbleView: UIView {
 	private weak var bubble: MessageBubble!
 
 
-	class func loadFrom(storyboard: UIStoryboard, id: String) -> Self {
+	class func loadFrom(storyboard: UIStoryboard, side: Side) -> Self {
 		// The absurdity that's Swift's type system. If something is possible to do with two functions, why not let it be just one?
 		func loadFromImpl<T>() -> T {
-			return storyboard.instantiateViewController(withIdentifier: id).view as! T
+			return storyboard.instantiateViewController(withIdentifier: side.storyboardId).view as! T
 		}
 		return loadFromImpl()
 	}
@@ -52,6 +72,5 @@ class MessageBubbleView: UIView {
 	private func adjustHeight() {
 		let vertSpacing = bubble.frame.top
 		frame.height = bubble.frame.bottom + vertSpacing
-print("height=", frame.height)
 	}
 }

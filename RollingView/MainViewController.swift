@@ -9,31 +9,42 @@
 import UIKit
 
 
-class MainViewController: UIViewController {
+class MainViewController: UIViewController, RollingViewDelegate {
 
 	@IBOutlet
 	weak var rollingView: RollingView!
 
 
+	private var lines = try! String(contentsOfFile: Bundle.main.path(forResource: "Bukowski", ofType: "txt")!, encoding: .utf8).components(separatedBy: .newlines)
+
+
 	override func viewDidLoad() {
 		super.viewDidLoad()
-		// let lines = try! String(contentsOfFile: Bundle.main.path(forResource: "Text", ofType: "txt")!, encoding: .utf8).components(separatedBy: .newlines)
-		let left = MessageBubbleView.loadFrom(storyboard: storyboard!, id: "LeftBubble")
-		left.frame.top = 100
-		left.frame.width = view.frame.width
-		left.text = "klj asdklja sdklj askldj aklsdja ksldjklas jdlkaj sdklajs dlkajs dklajs dlkajs dklasj dklajs dklajs d"
-		view.addSubview(left)
-		left.layoutIfNeeded()
-
-		let right = MessageBubbleView.loadFrom(storyboard: storyboard!, id: "RightBubble")
-		right.frame.top = left.frame.bottom
-		right.frame.width = view.frame.width
-		right.text = "Sane message. Not really kls jklaj sdklaj sdklaj sdkljasdkagf kjshd alksdakljs d"
-		view.addSubview(right)
-		right.layoutIfNeeded()
+		rollingView.rollingViewDelegate = self
 	}
 
 
-	@IBAction func addAction(_ sender: Any) {
+	@IBAction func addAction(_ sender: UIButton) {
+		let edge = RollingView.Edge(rawValue: sender.tag)!
+		rollingView.addCells(edge, count: 2)
 	}
+
+
+	private func instantiateBubble(side: MessageBubbleView.Side, text: String) -> MessageBubbleView {
+		let bubble = MessageBubbleView.loadFrom(storyboard: storyboard!, side: side)
+		bubble.text = text
+		bubble.frame.width = view.frame.width
+		bubble.layoutIfNeeded()
+		return bubble
+	}
+
+
+	private var lastSide: MessageBubbleView.Side = .right
+
+	func rollingView(_ rollingView: RollingView, cellLayerForIndex index: Int) -> CALayer {
+		lastSide = lastSide.flipped
+		let text = lines[abs(index) % lines.count]
+		return instantiateBubble(side: lastSide, text: text).layer
+	}
+
 }

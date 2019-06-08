@@ -12,7 +12,7 @@
 		3612145A22A85B7A000536A0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3612145822A85B7A000536A0 /* Main.storyboard */; };
 		3612145F22A85B7C000536A0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3612145E22A85B7C000536A0 /* Assets.xcassets */; };
 		3612146222A85B7C000536A0 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3612146022A85B7C000536A0 /* LaunchScreen.storyboard */; };
-		3612146C22A85ED2000536A0 /* Text.txt in Resources */ = {isa = PBXBuildFile; fileRef = 3612146B22A85ED2000536A0 /* Text.txt */; };
+		3612146C22A85ED2000536A0 /* Bukowski.txt in Resources */ = {isa = PBXBuildFile; fileRef = 3612146B22A85ED2000536A0 /* Bukowski.txt */; };
 		3612147022A8644A000536A0 /* RollingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3612146F22A8644A000536A0 /* RollingView.swift */; };
 		36375B5822AA4AF400DBE33F /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36375B5722AA4AF400DBE33F /* Utilities.swift */; };
 		36604B3222ABC4770022034B /* MessageBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36604B3122ABC4770022034B /* MessageBubbleView.swift */; };
@@ -26,7 +26,7 @@
 		3612145E22A85B7C000536A0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3612146122A85B7C000536A0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		3612146322A85B7C000536A0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		3612146B22A85ED2000536A0 /* Text.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Text.txt; sourceTree = "<group>"; };
+		3612146B22A85ED2000536A0 /* Bukowski.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Bukowski.txt; sourceTree = "<group>"; };
 		3612146F22A8644A000536A0 /* RollingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RollingView.swift; sourceTree = "<group>"; };
 		36375B5722AA4AF400DBE33F /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		36604B3122ABC4770022034B /* MessageBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageBubbleView.swift; sourceTree = "<group>"; };
@@ -71,7 +71,7 @@
 				3612145E22A85B7C000536A0 /* Assets.xcassets */,
 				3612146022A85B7C000536A0 /* LaunchScreen.storyboard */,
 				3612146322A85B7C000536A0 /* Info.plist */,
-				3612146B22A85ED2000536A0 /* Text.txt */,
+				3612146B22A85ED2000536A0 /* Bukowski.txt */,
 			);
 			path = RollingView;
 			sourceTree = "<group>";
@@ -137,7 +137,7 @@
 				3612146222A85B7C000536A0 /* LaunchScreen.storyboard in Resources */,
 				3612145F22A85B7C000536A0 /* Assets.xcassets in Resources */,
 				3612145A22A85B7A000536A0 /* Main.storyboard in Resources */,
-				3612146C22A85ED2000536A0 /* Text.txt in Resources */,
+				3612146C22A85ED2000536A0 /* Bukowski.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
