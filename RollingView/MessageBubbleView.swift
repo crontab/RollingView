@@ -24,10 +24,7 @@ class MessageBubbleView: UIView {
 
 	var text: String? {
 		get { return textLabel.text }
-		set {
-			textLabel.text = newValue
-			layoutIfNeeded()
-		}
+		set { textLabel.text = newValue }
 	}
 
 	@IBOutlet
@@ -55,5 +52,6 @@ class MessageBubbleView: UIView {
 	private func adjustHeight() {
 		let vertSpacing = bubble.frame.top
 		frame.height = bubble.frame.bottom + vertSpacing
+print("height=", frame.height)
 	}
 }

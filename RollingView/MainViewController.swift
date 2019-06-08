@@ -23,12 +23,14 @@ class MainViewController: UIViewController {
 		left.frame.width = view.frame.width
 		left.text = "klj asdklja sdklj askldj aklsdja ksldjklas jdlkaj sdklajs dlkajs dklajs dlkajs dklasj dklajs dklajs d"
 		view.addSubview(left)
+		left.layoutIfNeeded()
 
 		let right = MessageBubbleView.loadFrom(storyboard: storyboard!, id: "RightBubble")
 		right.frame.top = left.frame.bottom
 		right.frame.width = view.frame.width
 		right.text = "Sane message. Not really kls jklaj sdklaj sdklaj sdkljasdkagf kjshd alksdakljs d"
 		view.addSubview(right)
+		right.layoutIfNeeded()
 	}
 
 
