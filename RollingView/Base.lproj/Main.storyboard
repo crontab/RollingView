@@ -1,41 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
-    <device id="retina5_9" orientation="portrait">
-        <adaptation id="fullscreen"/>
-    </device>
     <dependencies>
-        <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14490.49"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
-        <!--View Controller-->
+        <!--Main View Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="ViewController" customModule="RollingView" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="BYZ-38-t0r" customClass="MainViewController" customModule="RollingView" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
-                        <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="vfQ-jQ-uId">
-                                <rect key="frame" x="0.0" y="44" width="375" height="734"/>
+                                <rect key="frame" x="0.0" y="20" width="600" height="580"/>
                                 <subviews>
                                     <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="zfX-Wb-WJC" customClass="RollingView" customModule="RollingView" customModuleProvider="target">
-                                        <rect key="frame" x="0.0" y="0.0" width="375" height="685"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="600" height="531"/>
                                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     </view>
                                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="bRq-Ry-shQ">
-                                        <rect key="frame" x="0.0" y="685" width="375" height="49"/>
+                                        <rect key="frame" x="0.0" y="531" width="600" height="49"/>
                                         <subviews>
-                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="3af-FT-S5t">
-                                                <rect key="frame" x="265" y="0.0" width="110" height="49"/>
+                                            <button opaque="NO" tag="1" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="3af-FT-S5t">
+                                                <rect key="frame" x="490" y="0.0" width="110" height="49"/>
                                                 <constraints>
                                                     <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="110" id="wuS-az-ynE"/>
                                                 </constraints>
-                                                <state key="normal" title="Add more"/>
+                                                <state key="normal" title="Add below"/>
                                                 <connections>
                                                     <action selector="addAction:" destination="BYZ-38-t0r" eventType="touchUpInside" id="8f9-HN-6uE"/>
+                                                </connections>
+                                            </button>
+                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Iqs-1v-WgA">
+                                                <rect key="frame" x="0.0" y="0.0" width="110" height="49"/>
+                                                <constraints>
+                                                    <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="110" id="A0q-lO-hBS"/>
+                                                </constraints>
+                                                <state key="normal" title="Add above"/>
+                                                <connections>
+                                                    <action selector="addAction:" destination="BYZ-38-t0r" eventType="touchUpInside" id="X8q-aI-hqR"/>
                                                 </connections>
                                             </button>
                                         </subviews>
@@ -43,9 +49,12 @@
                                         <constraints>
                                             <constraint firstAttribute="bottom" secondItem="3af-FT-S5t" secondAttribute="bottom" id="374-rv-wpq"/>
                                             <constraint firstAttribute="height" constant="49" id="4U5-cN-vMc"/>
-                                            <constraint firstItem="3af-FT-S5t" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="bRq-Ry-shQ" secondAttribute="leading" id="Hvr-dr-iG4"/>
                                             <constraint firstAttribute="trailing" secondItem="3af-FT-S5t" secondAttribute="trailing" id="LHb-iu-BCJ"/>
+                                            <constraint firstItem="3af-FT-S5t" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="Iqs-1v-WgA" secondAttribute="trailing" constant="8" id="PrP-05-EcT"/>
                                             <constraint firstItem="3af-FT-S5t" firstAttribute="top" secondItem="bRq-Ry-shQ" secondAttribute="top" id="VJL-dk-4M8"/>
+                                            <constraint firstAttribute="bottom" secondItem="Iqs-1v-WgA" secondAttribute="bottom" id="dG9-LV-9xY"/>
+                                            <constraint firstItem="Iqs-1v-WgA" firstAttribute="leading" secondItem="bRq-Ry-shQ" secondAttribute="leading" id="jyJ-2J-C0V"/>
+                                            <constraint firstItem="Iqs-1v-WgA" firstAttribute="top" secondItem="bRq-Ry-shQ" secondAttribute="top" id="nhp-o9-Sri"/>
                                         </constraints>
                                     </view>
                                 </subviews>
