@@ -50,7 +50,7 @@ class RollingView: UIScrollView {
 
 
 	private func setup() {
-		contentView = RollingContentView(width: frame.size.width, backgroundColor: backgroundColor)
+		contentView = RollingContentView(width: frame.width, backgroundColor: backgroundColor)
 		contentView.autoresizingMask = .flexibleWidth
 		insertSubview(contentView, at: 0)
 		alwaysBounceVertical = true
@@ -126,9 +126,9 @@ private class RollingContentView: UIView {
 		let box = context.boundingBoxOfClipPath
 
 		// TODO: fill empty spaces above and below layers with bgColor
-		var index = yCoordinates.binarySearch(box.origin.y)
+		var index = yCoordinates.binarySearch(box.top)
 		if index < yCoordinates.count {
-			let endY = min(bottom, box.origin.y + box.size.height)
+			let endY = min(bottom, box.top + box.height)
 			var layerY = yCoordinates[index]
 			repeat {
 				if let layer = layerCache[layerY as NSNumber] {
@@ -145,13 +145,13 @@ private class RollingContentView: UIView {
 		#if DEBUG
 			let tiledLayer = (layer as! TiledLayer)
 			let tileSize = tiledLayer.tileSize
-			let i = Int(box.origin.x * tiledLayer.contentsScale / tileSize.width)
-			let j = Int((box.origin.y - masterOffset) * tiledLayer.contentsScale / tileSize.height)
+			let i = Int(box.left * tiledLayer.contentsScale / tileSize.width)
+			let j = Int((box.top - masterOffset) * tiledLayer.contentsScale / tileSize.height)
 			UIGraphicsPushContext(context)
 			let font = UIFont(name: "CourierNewPS-BoldMT", size: 16)!
 			let string = String(format: "%d, %d", i, j)
 			let a = NSAttributedString(string: string, attributes: [.font: font, .foregroundColor: UIColor.lightGray])
-			a.draw(at: CGPoint(x: box.origin.x + 1, y: box.origin.y + 1))
+			a.draw(at: CGPoint(x: box.left + 1, y: box.top + 1))
 			UIGraphicsPopContext()
 		#endif
 	}
@@ -167,21 +167,21 @@ private class RollingContentView: UIView {
 				var newYCoordinates: [CGFloat] = []
 				var y: CGFloat = self.yCoordinates.first ?? self.masterOffset
 				for layer in layers.reversed() {
-					let layerHeight = layer.frame.size.height
+					let layerHeight = layer.frame.height
 					totalHeight += layerHeight
 					y -= layerHeight
-					layer.frame.origin.y = y
+					layer.frame.top = y
 					self.layerCache[y as NSNumber] = layer
 					newYCoordinates.append(y)
 				}
-				self.frame.origin.y += (self.yCoordinates.first ?? self.masterOffset) - y
+				self.frame.top += (self.yCoordinates.first ?? self.masterOffset) - y
 				self.yCoordinates.insert(contentsOf: newYCoordinates.reversed(), at: 0)
 
 			case .bottom:
 				for layer in layers {
-					let layerHeight = layer.frame.size.height
+					let layerHeight = layer.frame.height
 					totalHeight += layerHeight
-					layer.frame.origin.y = self.bottom
+					layer.frame.top = self.bottom
 					self.layerCache[self.bottom as NSNumber] = layer
 					self.yCoordinates.append(self.bottom)
 					self.bottom += layerHeight
