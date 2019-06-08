@@ -99,22 +99,14 @@ class RollingView: UIScrollView {
 
 
 
-private let CONTENT_HEIGHT: CGFloat = 10_000_000 // this is approximate; will be rounded to the nearest tile edge at run time
+private let CONTENT_HEIGHT: CGFloat = 10_000_000
 
 
 private class RollingContentView: UIView {
 
-	private class TiledLayer: CATiledLayer {
-		override class func fadeDuration() -> CFTimeInterval {
-			return 0
-		}
-	}
-
-
 	private var masterOffset: CGFloat = 0		// will become roughly CONTENT_HEIGHT / 2
 	private var bgColor: UIColor?
 
-	private var queue = DispatchQueue(label: "com.melikyan.RollingView")
 	private var yCoordinates: [CGFloat] = []	// `y` coordinates of cells; negative values are allowed
 	private var bottom: CGFloat = 0				// this is yCoordinates.last + the height of the last layer
 	private var layerCache = CachingDictionary<NSNumber, CALayer>(capacity: 50) // to be replaced with a simpler implementation: we don't need thread safety, nor do we need costs
@@ -122,17 +114,12 @@ private class RollingContentView: UIView {
 
 	convenience init(width: CGFloat, backgroundColor: UIColor?) {
 		self.init()
-		let tiledLayer = (layer as! TiledLayer)
 		// Tiled layer's size is in device pixels but we don't translate it here because we want to get round numbers:
-		masterOffset = floor(CONTENT_HEIGHT / tiledLayer.tileSize.height) * tiledLayer.tileSize.height
+		// masterOffset = floor(CONTENT_HEIGHT / tiledLayer.tileSize.height) * tiledLayer.tileSize.height
+		masterOffset = CONTENT_HEIGHT / 2
 		bottom = masterOffset
 		frame = CGRect(x: 0, y: -masterOffset, width: width, height: masterOffset * 2)
 		bgColor = backgroundColor
-	}
-
-
-	override class var layerClass: AnyClass {
-		return TiledLayer.self
 	}
 
 
@@ -142,94 +129,37 @@ private class RollingContentView: UIView {
 
 
 	fileprivate func addLayers(to edge: RollingView.Edge, layers: [CALayer]) {
-		queue.async {
-			var unionFrame: CGRect?
+		var totalHeight: CGFloat = 0
 
-			switch edge {
+		switch edge {
 
-			case .top:
-				var newYCoordinates: [CGFloat] = []
-				var y: CGFloat = self.yCoordinates.first ?? self.masterOffset
-				for layer in layers.reversed() {
-					let layerHeight = layer.frame.height
-					y -= layerHeight
-					layer.frame.top = y
-					self.layerCache[y as NSNumber] = layer
-					newYCoordinates.append(y)
-					if let u = unionFrame {
-						unionFrame = u.union(layer.frame)
-					}
-					else {
-						unionFrame = layer.frame
-					}
-				}
-				self.frame.top += (self.yCoordinates.first ?? self.masterOffset) - y
-				self.yCoordinates.insert(contentsOf: newYCoordinates.reversed(), at: 0)
-
-			case .bottom:
-				for layer in layers {
-					let layerHeight = layer.frame.height
-					layer.frame.top = self.bottom
-					self.layerCache[self.bottom as NSNumber] = layer
-					self.yCoordinates.append(self.bottom)
-					self.bottom += layerHeight
-					if let u = unionFrame {
-						unionFrame = u.union(layer.frame)
-					}
-					else {
-						unionFrame = layer.frame
-					}
-				}
+		case .top:
+			var newYCoordinates: [CGFloat] = []
+			var y: CGFloat = self.yCoordinates.first ?? self.masterOffset
+			for layer in layers.reversed() {
+				let layerHeight = layer.frame.height
+				y -= layerHeight
+				totalHeight += layerHeight
+				layer.frame.top = y
+				self.layerCache[y as NSNumber] = layer
+				newYCoordinates.append(y)
+				self.layer.addSublayer(layer)
 			}
+			self.frame.top += (self.yCoordinates.first ?? self.masterOffset) - y
+			self.yCoordinates.insert(contentsOf: newYCoordinates.reversed(), at: 0)
 
-			if let unionFrame = unionFrame {
-				DispatchQueue.main.async {
-					self.hostView.contentDidAddSpace(edge: edge, height: unionFrame.height)
-					self.setNeedsDisplay(unionFrame)
-				}
-			}
-		}
-	}
-
-
-	override func draw(_ layer: CALayer, in context: CGContext) {
-		// let bgColor = (self.bgColor ?? UIColor.white).cgColor
-		let box = context.boundingBoxOfClipPath
-
-		context.translateBy(x: 0, y: CONTENT_HEIGHT)
-		context.scaleBy(x: 1, y: -1)
-
-		// TODO: fill empty spaces above and below layers with bgColor
-		var index = yCoordinates.binarySearch(box.top)
-		if index > 0 {
-			index -= 1
-		}
-		if index < yCoordinates.count {
-			let endY = min(bottom, box.top + box.height)
-			var layerY = yCoordinates[index]
-			while layerY < endY {
-				if let layer = layerCache[layerY as NSNumber] {
-					layer.render(in: context)
-				}
-				else {
-					// TODO: fill with bgColor for now, then request a layer from delegate and invalidate the frame
-				}
-				index += 1
-				layerY = index < yCoordinates.count ? yCoordinates[index] : endY
+		case .bottom:
+			for layer in layers {
+				let layerHeight = layer.frame.height
+				totalHeight += layerHeight
+				layer.frame.top = self.bottom
+				self.layerCache[self.bottom as NSNumber] = layer
+				self.yCoordinates.append(self.bottom)
+				self.bottom += layerHeight
+				self.layer.addSublayer(layer)
 			}
 		}
 
-		#if DEBUG
-			let tiledLayer = (layer as! TiledLayer)
-			let tileSize = tiledLayer.tileSize
-			let i = Int(box.left * tiledLayer.contentsScale / tileSize.width)
-			let j = Int((box.top - masterOffset) * tiledLayer.contentsScale / tileSize.height)
-			UIGraphicsPushContext(context)
-			let font = UIFont(name: "CourierNewPS-BoldMT", size: 16)!
-			let string = String(format: "%d, %d", i, j)
-			let a = NSAttributedString(string: string, attributes: [.font: font, .foregroundColor: UIColor.lightGray])
-			a.draw(at: CGPoint(x: box.left + 1, y: box.top + 1))
-			UIGraphicsPopContext()
-		#endif
+		hostView.contentDidAddSpace(edge: edge, height: totalHeight)
 	}
 }

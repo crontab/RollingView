@@ -29,13 +29,12 @@ class MainViewController: UIViewController, RollingViewDelegate {
 		rollingView.addCells(edge, count: 2)
 	}
 
-
-	private func instantiateBubble(side: MessageBubbleView.Side, text: String) -> MessageBubbleView {
+	private func instantiateBubble(side: MessageBubbleView.Side, text: String) -> CALayer {
 		let bubble = MessageBubbleView.loadFrom(storyboard: storyboard!, side: side)
 		bubble.text = text
 		bubble.frame.width = view.frame.width
-		bubble.layoutIfNeeded()
-		return bubble
+		bubble.adjustHeight()
+		return bubble.layer
 	}
 
 
@@ -44,7 +43,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	func rollingView(_ rollingView: RollingView, cellLayerForIndex index: Int) -> CALayer {
 		lastSide = lastSide.flipped
 		let text = lines[abs(index) % lines.count]
-		return instantiateBubble(side: lastSide, text: text).layer
+		return instantiateBubble(side: lastSide, text: text)
 	}
 
 }

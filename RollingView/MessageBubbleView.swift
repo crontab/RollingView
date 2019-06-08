@@ -69,8 +69,12 @@ class MessageBubbleView: UIView {
 	}
 
 
-	private func adjustHeight() {
+	func adjustHeight() {
 		let vertSpacing = bubble.frame.top
 		frame.height = bubble.frame.bottom + vertSpacing
+	}
+
+	deinit {
+		print("Message bubble deinit", textLabel.text ?? "")
 	}
 }
