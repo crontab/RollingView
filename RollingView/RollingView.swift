@@ -63,40 +63,31 @@ class RollingView: UIScrollView {
 		super.layoutSubviews()
 		if firstLayout {
 			firstLayout = false
+			contentSize.width = frame.width
 			contentView = RollingContentView(parentWindowSize: bounds.size, backgroundColor: backgroundColor)
 			contentView.autoresizingMask = .flexibleWidth
 			insertSubview(contentView, at: 0)
-			contentSize = bounds.size
+			contentInset.top = bounds.height
 		}
 	}
 
 
 	fileprivate func contentDidAddSpace(edge: Edge, addedHeight: CGFloat) {
-		let delta = min(addedHeight, contentView.contentHeight - bounds.height)
+		let distanceToBottom = contentSize.height + contentInset.bottom - (contentOffset.y + bounds.height)
+
+		contentSize.height += addedHeight
+		let delta = contentInset.top - addedHeight
 
 		switch edge {
 		case .top:
-			if delta > 0 {
-				contentSize.height += delta
-				contentOffset.y += delta
-				contentView.frame.top += delta
-			}
+			contentInset.top = max(0, delta)
+			contentOffset.y += max(0, -delta)
+			contentView.frame.top += addedHeight
 
 		case .bottom:
-			// "Scroll in" the new message if at the bottom of the sheet or within 20 pixels from it
-			let scrollerIsAtBottom = contentSize.height - contentOffset.y <= bounds.height + 20
-			if delta > 0 {
-				contentSize.height += delta
-			}
-			if scrollerIsAtBottom {
+			if distanceToBottom < 20 {
 				UIView.transition(with: self, duration: 0.25, options: .curveEaseInOut, animations: {
-					if delta < 0 {
-						self.contentSize = self.bounds.size
-						self.contentView.frame.top -= addedHeight
-					}
-					else if delta < addedHeight {
-						self.contentView.frame.top -= addedHeight - delta
-					}
+					self.contentInset.top = max(0, delta)
 					self.scrollRectToVisible(CGRect(x: 0, y: self.contentSize.height - 1, width: 1, height: 1), animated: false)
 				})
 			}
@@ -151,7 +142,7 @@ private class RollingContentView: UIView {
 
 	convenience init(parentWindowSize: CGSize, backgroundColor: UIColor?) {
 		self.init()
-		frame = CGRect(x: 0, y: -MASTER_OFFSET + parentWindowSize.height, width: parentWindowSize.width, height: CONTENT_HEIGHT)
+		frame = CGRect(x: 0, y: -MASTER_OFFSET, width: parentWindowSize.width, height: CONTENT_HEIGHT)
 		bgColor = backgroundColor
 	}
 

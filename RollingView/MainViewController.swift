@@ -55,4 +55,9 @@ class MainViewController: UIViewController, RollingViewDelegate {
 		let string = lines[abs(index) % lines.count]
 		return factories[side]!.create(width: view.frame.width, string: string)
 	}
+
+
+	@IBAction func insetAction(_ sender: Any) {
+		rollingView.contentInset.bottom = rollingView.contentInset.bottom > 0 ? 0 : 100
+	}
 }
