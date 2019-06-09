@@ -67,38 +67,3 @@ extension Array where Element: Comparable {
 		return low
 	}
 }
-
-
-
-struct CachingDictionary<K: AnyObject, T: AnyObject> {
-	// Should be replaced with a simpler, non-thread-safe implementation
-
-	private var cache = NSCache<K, T>()
-
-	init(capacity: Int) {
-		cache.countLimit = capacity
-	}
-
-	subscript(key: K) -> T? {
-		get {
-			return cache.object(forKey: key)
-		}
-		set {
-			if newValue == nil {
-				cache.removeObject(forKey: key)
-			}
-			else {
-				cache.setObject(newValue!, forKey: key)
-			}
-		}
-	}
-
-	func clear() {
-		cache.removeAllObjects()
-	}
-
-	var delegate: NSCacheDelegate? {
-		get { return cache.delegate }
-		set { cache.delegate = newValue }
-	}
-}
