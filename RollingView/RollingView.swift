@@ -53,22 +53,47 @@ class RollingView: UIScrollView {
 
 
 	private func setup() {
-		contentView = RollingContentView(width: frame.width, backgroundColor: backgroundColor)
-		contentView.autoresizingMask = .flexibleWidth
-		insertSubview(contentView, at: 0)
 		alwaysBounceVertical = true
 	}
 
 
-	fileprivate func contentDidAddSpace(edge: Edge, height: CGFloat) {
-		contentSize.height += height
-		if edge == .top {
-			if contentSize.height < bounds.height {
-				// TODO:
-				setContentOffset(CGPoint(x: 0, y: 0), animated: true)
+	private var firstLayout = true
+
+	override func layoutSubviews() {
+		super.layoutSubviews()
+		if firstLayout {
+			firstLayout = false
+			contentView = RollingContentView(parentWindowSize: bounds.size, backgroundColor: backgroundColor)
+			contentView.autoresizingMask = .flexibleWidth
+			insertSubview(contentView, at: 0)
+			contentSize = bounds.size
+		}
+	}
+
+
+	fileprivate func contentDidAddSpace(edge: Edge, addedHeight: CGFloat) {
+
+		switch edge {
+		case .top:
+			let delta = min(addedHeight, contentView.totalContentHeight - bounds.height)
+			if delta > 0 {
+				contentSize.height += delta
+				contentOffset.y += delta
+				contentView.frame.top += delta
 			}
-			else {
-				contentOffset.y += height
+
+		case .bottom:
+			// "Scroll in" the new message if at the bottom of the sheet or within 20 pixels from it
+			let scrollerIsAtBottom = contentSize.height - contentOffset.y <= bounds.height + 20
+			contentSize.height += addedHeight
+			if scrollerIsAtBottom {
+				UIView.transition(with: self, duration: 0.25, options: .curveEaseInOut, animations: {
+					if self.contentView.totalContentHeight < self.bounds.height {
+						self.contentSize = self.bounds.size
+						self.contentView.frame.top -= addedHeight
+					}
+					self.scrollRectToVisible(CGRect(x: 0, y: self.contentSize.height - 1, width: 1, height: 1), animated: false)
+				})
 			}
 		}
 	}
@@ -85,24 +110,33 @@ private class RollingContentView: UIView, NSCacheDelegate {
 	private var bgColor: UIColor?
 
 	private var yCoordinates: [CGFloat] = []	// `y` coordinates of cells; negative values are allowed
-	private var bottom: CGFloat = 0				// this is yCoordinates.last + the height of the last layer
+	private var contentBottom: CGFloat = 0		// this is yCoordinates.last + the height of the last layer
+	private var contentTop: CGFloat {
+		return yCoordinates.first ?? contentBottom
+	}
+
 	private var layerCache = CachingDictionary<NSNumber, CALayer>(capacity: 50) // to be replaced with a simpler implementation: we don't need thread safety, nor do we need costs
 
 	private var startIndex = 0
 	private var endIndex = 0
 
 
+	fileprivate var totalContentHeight: CGFloat {
+		return contentBottom - contentTop
+	}
+
+
 	// CATiledLayer is very memory hungry even though it should be the opposite
-//	override class var layerClass: AnyClass {
-//		return CATiledLayer.self
-//	}
+	//	override class var layerClass: AnyClass {
+	//		return CATiledLayer.self
+	//	}
 
 
-	convenience init(width: CGFloat, backgroundColor: UIColor?) {
+	convenience init(parentWindowSize: CGSize, backgroundColor: UIColor?) {
 		self.init()
 		layerCache.delegate = self
-		bottom = MASTER_OFFSET
-		frame = CGRect(x: 0, y: -MASTER_OFFSET, width: width, height: MASTER_OFFSET * 2)
+		contentBottom = MASTER_OFFSET
+		frame = CGRect(x: 0, y: -MASTER_OFFSET + parentWindowSize.height, width: parentWindowSize.width, height: CONTENT_HEIGHT)
 		bgColor = backgroundColor
 	}
 
@@ -141,7 +175,6 @@ private class RollingContentView: UIView, NSCacheDelegate {
 				newYCoordinates.append(y)
 				self.layer.addSublayer(layer)
 			}
-			frame.top += (yCoordinates.first ?? MASTER_OFFSET) - y
 			yCoordinates.insert(contentsOf: newYCoordinates.reversed(), at: 0)
 
 		case .bottom:
@@ -150,15 +183,15 @@ private class RollingContentView: UIView, NSCacheDelegate {
 			for layer in layers {
 				let layerHeight = layer.frame.height
 				totalHeight += layerHeight
-				layer.frame.top = bottom
-				layerCache[bottom as NSNumber] = layer
-				yCoordinates.append(bottom)
-				bottom += layerHeight
+				layer.frame.top = contentBottom
+				layerCache[contentBottom as NSNumber] = layer
+				yCoordinates.append(contentBottom)
+				contentBottom += layerHeight
 				self.layer.addSublayer(layer)
 			}
 		}
 
-		hostView.contentDidAddSpace(edge: edge, height: totalHeight)
+		hostView.contentDidAddSpace(edge: edge, addedHeight: totalHeight)
 	}
 
 
