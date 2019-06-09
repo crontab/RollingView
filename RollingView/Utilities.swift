@@ -96,4 +96,9 @@ struct CachingDictionary<K: AnyObject, T: AnyObject> {
 	func clear() {
 		cache.removeAllObjects()
 	}
+
+	var delegate: NSCacheDelegate? {
+		get { return cache.delegate }
+		set { cache.delegate = newValue }
+	}
 }

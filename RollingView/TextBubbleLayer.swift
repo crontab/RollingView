@@ -9,6 +9,9 @@
 import UIKit
 
 
+typealias StringAttributes = [NSAttributedString.Key: Any]
+
+
 class TextBubbleFactory {
 
 	enum Side: Int {
@@ -37,17 +40,17 @@ class TextBubbleFactory {
 
 	var margins = UIEdgeInsets(top: 6, left: 6, bottom: 6, right: 6)
 
-	var bubbleColor: UIColor?
+	var bubbleColor: UIColor? = UIColor(red: 50 / 255, green: 135 / 255, blue: 255 / 255, alpha: 1) // standard tint color
 	var backgroundColor = UIColor.white
 
 	var cornerRadius: CGFloat = 8
 
 
-	private var attributes: [NSAttributedString.Key: Any] = [.paragraphStyle: NSParagraphStyle.default.mutableCopy() as! NSMutableParagraphStyle]
+	private var attributes: StringAttributes = [.paragraphStyle: NSParagraphStyle.default.mutableCopy() as! NSMutableParagraphStyle]
 
 
-	func create(width: CGFloat, text: String) -> CALayer {
-		let textLayer = TextLayer(maxWidth: width - insets.left - insets.right - margins.left - margins.right, text: NSAttributedString(string: text, attributes: attributes))
+	func create(width: CGFloat, string: String) -> CALayer {
+		let textLayer = TextLayer(maxWidth: width - insets.left - insets.right - margins.left - margins.right, string: string, attributes: attributes)
 		textLayer.frame.left += insets.left
 		textLayer.frame.top += insets.top
 
@@ -72,12 +75,13 @@ class TextBubbleFactory {
 
 	private class TextLayer: CATextLayer {
 
-		convenience init(maxWidth: CGFloat, text: NSAttributedString) {
+		convenience init(maxWidth: CGFloat, string: String, attributes: StringAttributes) {
 			self.init()
 			self.contentsScale = UIScreen.main.scale
-			frame = text.boundingRect(with: CGSize(width: maxWidth, height: 10_000), options: [.usesFontLeading, .usesLineFragmentOrigin], context: nil)
+			let string = NSAttributedString(string: string, attributes: attributes)
+			frame = string.boundingRect(with: CGSize(width: maxWidth, height: 10_000), options: [.usesFontLeading, .usesLineFragmentOrigin], context: nil)
 			self.isWrapped = true
-			switch ((text.attributes(at: 0, effectiveRange: nil)[.paragraphStyle] as? NSParagraphStyle)?.alignment ?? .left) {
+			switch (attributes[.paragraphStyle] as? NSParagraphStyle)?.alignment ?? .left {
 			case .left: 	self.alignmentMode = .left
 			case .right:	self.alignmentMode = .right
 			case .center:	self.alignmentMode = .center
@@ -86,7 +90,7 @@ class TextBubbleFactory {
 			@unknown default:
 				break
 			}
-			self.string = text
+			self.string = string
 		}
 	}
 }
