@@ -22,6 +22,9 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
+
+		rollingView.alwaysBounceVertical = true
+		// rollingView.showsVerticalScrollIndicator = false
 		rollingView.rollingViewDelegate = self
 
 		let leftFactory = TextBubbleFactory()

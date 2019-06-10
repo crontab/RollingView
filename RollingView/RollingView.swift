@@ -38,26 +38,8 @@ class RollingView: UIScrollView {
 	// Private/protected
 
 	private var contentView: RollingContentView!
-
-
-	override init(frame: CGRect) {
-		super.init(frame: frame)
-		setup()
-	}
-
-
-	required init?(coder aDecoder: NSCoder) {
-		super.init(coder: aDecoder)
-		setup()
-	}
-
-
-	private func setup() {
-		alwaysBounceVertical = true
-	}
-
-
 	private var firstLayout = true
+
 
 	override func layoutSubviews() {
 		super.layoutSubviews()
