@@ -80,8 +80,8 @@ class TextBubbleFactory {
 			self.contentsScale = UIScreen.main.scale
 			let string = NSAttributedString(string: string, attributes: attributes)
 			frame = string.boundingRect(with: CGSize(width: maxWidth, height: 10_000), options: [.usesFontLeading, .usesLineFragmentOrigin], context: nil)
-			frame.width = ceil(frame.width)
-			frame.height = ceil(frame.height)
+			frame.size.width = ceil(frame.width)
+			frame.size.height = ceil(frame.height)
 			self.isWrapped = true
 			switch (attributes[.paragraphStyle] as? NSParagraphStyle)?.alignment ?? .left {
 			case .left: 	self.alignmentMode = .left

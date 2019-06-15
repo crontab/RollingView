@@ -11,8 +11,9 @@ import UIKit
 
 class MainViewController: UIViewController, RollingViewDelegate {
 
-	@IBOutlet
-	weak var rollingView: RollingView!
+	@IBOutlet weak var rollingView: RollingView!
+
+	@IBOutlet weak var bottomBar: UIView!
 
 
 	private var factories: [TextBubbleFactory.Side: TextBubbleFactory]!
@@ -43,7 +44,16 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	}
 
 
-	var a: [CALayer] = []
+	private var firstLayout = true
+
+	override func viewDidLayoutSubviews() {
+		super.viewDidLayoutSubviews()
+		if firstLayout {
+			firstLayout = false
+			rollingView.bottomInset = bottomBar.frame.height
+		}
+	}
+
 
 	@IBAction func addAction(_ sender: UIButton) {
 		let edge = RollingView.Edge(rawValue: sender.tag)!
@@ -60,9 +70,12 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	}
 
 
+	private var kbShown = false
+
 	@IBAction func insetAction(_ sender: Any) {
+		kbShown = !kbShown
 		UIView.animate(withDuration: 0.25) {
-			self.rollingView.bottomInset = self.rollingView.bottomInset > 0 ? 0 : 100
+			self.rollingView.bottomInset = self.bottomBar.frame.height + (self.kbShown ? 300 : 0)
 		}
 	}
 }

@@ -25,18 +25,6 @@ extension CGRect {
 	}
 
 	@inlinable
-	var width: CGFloat {
-		get { return size.width }
-		set { size.width = newValue }
-	}
-
-	@inlinable
-	var height: CGFloat {
-		get { return size.height }
-		set { size.height = newValue }
-	}
-
-	@inlinable
 	var bottom: CGFloat {
 		get { return origin.y + size.height }
 		set { size.height = newValue - origin.y }

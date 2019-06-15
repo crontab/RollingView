@@ -62,9 +62,13 @@ class RollingView: UIScrollView {
 		if firstLayout {
 			firstLayout = false
 			contentSize.width = frame.width
-			contentInset.top = bounds.height
-			print("RollingView layout width:", contentSize.width)
+			contentInset.top = safeBoundsHeight - contentInset.bottom
 		}
+	}
+
+
+	private var safeBoundsHeight: CGFloat {
+		return bounds.height - safeAreaInsets.bottom - safeAreaInsets.top
 	}
 
 
@@ -74,7 +78,7 @@ class RollingView: UIScrollView {
 			let oldValue = bottomInset
 			contentInset.bottom = newValue
 			contentOffset.y += max(0, newValue - oldValue)
-			contentInset.top = max(0, bounds.height - contentSize.height - contentInset.bottom)
+			contentInset.top = max(0, safeBoundsHeight - contentSize.height - contentInset.bottom)
 		}
 	}
 
