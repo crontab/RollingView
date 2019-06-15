@@ -9,7 +9,7 @@
 import UIKit
 
 
-protocol RollingViewDelegate {
+protocol RollingViewDelegate: class {
 	func rollingView(_ rollingView: RollingView, cellLayerForIndex index: Int) -> CALayer
 }
 
@@ -23,7 +23,7 @@ class RollingView: UIScrollView {
 	}
 
 
-	var rollingViewDelegate: RollingViewDelegate?
+	weak var rollingViewDelegate: RollingViewDelegate?
 
 
 	func addCells(_ edge: Edge, count: Int) {

@@ -57,7 +57,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 	@IBAction func addAction(_ sender: UIButton) {
 		let edge = RollingView.Edge(rawValue: sender.tag)!
-		rollingView.addCells(edge, count: 1, animated: true)
+		rollingView.addCells(edge, count: 1)
 	}
 
 
