@@ -26,7 +26,7 @@ class RollingView: UIScrollView {
 	var rollingViewDelegate: RollingViewDelegate?
 
 
-	func addCells(_ edge: Edge, count: Int, animated: Bool) {
+	func addCells(_ edge: Edge, count: Int) {
 		guard count > 0 else {
 			return
 		}
@@ -34,7 +34,7 @@ class RollingView: UIScrollView {
 		let layers = (startIndex..<(startIndex + count)).map { (index) -> CALayer in
 			return rollingViewDelegate?.rollingView(self, cellLayerForIndex: index) ?? CALayer()
 		}
-		contentView.addLayers(to: edge, startIndex: startIndex, layers: layers, animated: animated)
+		contentView.addLayers(to: edge, startIndex: startIndex, layers: layers)
 	}
 
 
@@ -75,6 +75,7 @@ class RollingView: UIScrollView {
 	var bottomInset: CGFloat {
 		get { return contentInset.bottom }
 		set {
+			layout()
 			let oldValue = bottomInset
 			contentInset.bottom = newValue
 			contentOffset.y += max(0, newValue - oldValue)
@@ -83,7 +84,7 @@ class RollingView: UIScrollView {
 	}
 
 
-	fileprivate func contentDidAddSpace(edge: Edge, addedHeight: CGFloat, animated: Bool) {
+	fileprivate func contentDidAddSpace(edge: Edge, addedHeight: CGFloat) {
 		layout()
 
 		let distanceToBottom = contentSize.height + contentInset.bottom - (contentOffset.y + bounds.height)
@@ -98,7 +99,7 @@ class RollingView: UIScrollView {
 
 		case .bottom:
 			if distanceToBottom < 20 {
-				UIView.transition(with: self, duration: animated ? 0.25 : 0, options: .curveEaseInOut, animations: {
+				UIView.transition(with: self, duration: 0.25, options: .curveEaseInOut, animations: {
 					self.contentInset.top = max(0, delta)
 					self.scrollRectToVisible(CGRect(x: 0, y: self.contentSize.height - 1, width: 1, height: 1), animated: false)
 				})
@@ -172,7 +173,7 @@ private class RollingContentView: UIView {
 	}
 
 
-	fileprivate func addLayers(to edge: RollingView.Edge, startIndex: Int, layers: [CALayer], animated: Bool) {
+	fileprivate func addLayers(to edge: RollingView.Edge, startIndex: Int, layers: [CALayer]) {
 		var totalHeight: CGFloat = 0
 
 		switch edge {
@@ -204,6 +205,6 @@ private class RollingContentView: UIView {
 			}
 		}
 
-		hostView.contentDidAddSpace(edge: edge, addedHeight: totalHeight, animated: animated)
+		hostView.contentDidAddSpace(edge: edge, addedHeight: totalHeight)
 	}
 }
