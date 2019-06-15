@@ -1,6 +1,6 @@
 //
 //  RollingView.swift
-//  Messenger
+//  RollingView
 //
 //  Created by Hovik Melikyan on 05/06/2019.
 //  Copyright © 2019 Hovik Melikyan. All rights reserved.
@@ -26,12 +26,15 @@ class RollingView: UIScrollView {
 	var rollingViewDelegate: RollingViewDelegate?
 
 
-	func addCells(_ edge: Edge, count: Int) {
+	func addCells(_ edge: Edge, count: Int, animated: Bool) {
+		guard count > 0 else {
+			return
+		}
 		let startIndex = contentView.startIndexForEdge(edge, newLayerCount: count)
 		let layers = (startIndex..<(startIndex + count)).map { (index) -> CALayer in
 			return rollingViewDelegate?.rollingView(self, cellLayerForIndex: index) ?? CALayer()
 		}
-		contentView.addLayers(to: edge, startIndex: startIndex, layers: layers)
+		contentView.addLayers(to: edge, startIndex: startIndex, layers: layers, animated: animated)
 	}
 
 
@@ -41,22 +44,45 @@ class RollingView: UIScrollView {
 	private var firstLayout = true
 
 
+	override func awakeFromNib() {
+		super.awakeFromNib()
+		contentView = RollingContentView(parentWindowWidth: frame.width, backgroundColor: backgroundColor)
+		contentView.autoresizingMask = .flexibleWidth
+		insertSubview(contentView, at: 0)
+	}
+
+
 	override func layoutSubviews() {
 		super.layoutSubviews()
+		layout()
+	}
+
+
+	private func layout() {
 		if firstLayout {
 			firstLayout = false
 			contentSize.width = frame.width
-			contentView = RollingContentView(parentWindowSize: bounds.size, backgroundColor: backgroundColor)
-			contentView.autoresizingMask = .flexibleWidth
-			insertSubview(contentView, at: 0)
 			contentInset.top = bounds.height
+			print("RollingView layout width:", contentSize.width)
 		}
 	}
 
 
-	fileprivate func contentDidAddSpace(edge: Edge, addedHeight: CGFloat) {
-		let distanceToBottom = contentSize.height + contentInset.bottom - (contentOffset.y + bounds.height)
+	var bottomInset: CGFloat {
+		get { return contentInset.bottom }
+		set {
+			let oldValue = bottomInset
+			contentInset.bottom = newValue
+			contentOffset.y += max(0, newValue - oldValue)
+			contentInset.top = max(0, bounds.height - contentSize.height - contentInset.bottom)
+		}
+	}
 
+
+	fileprivate func contentDidAddSpace(edge: Edge, addedHeight: CGFloat, animated: Bool) {
+		layout()
+
+		let distanceToBottom = contentSize.height + contentInset.bottom - (contentOffset.y + bounds.height)
 		contentSize.height += addedHeight
 		let delta = contentInset.top - addedHeight
 
@@ -68,7 +94,7 @@ class RollingView: UIScrollView {
 
 		case .bottom:
 			if distanceToBottom < 20 {
-				UIView.transition(with: self, duration: 0.25, options: .curveEaseInOut, animations: {
+				UIView.transition(with: self, duration: animated ? 0.25 : 0, options: .curveEaseInOut, animations: {
 					self.contentInset.top = max(0, delta)
 					self.scrollRectToVisible(CGRect(x: 0, y: self.contentSize.height - 1, width: 1, height: 1), animated: false)
 				})
@@ -86,7 +112,7 @@ private let MASTER_OFFSET = CONTENT_HEIGHT / 2
 private class RollingContentView: UIView {
 
 	private struct Placeholder {
-		var layer: CALayer? // can be discarded to save memory; this provides our caching mechanism essentially
+		var layer: CALayer? // can be discarded to save memory; this provides our caching mechanism essentially (not yet)
 		var top: CGFloat
 		var height: CGFloat
 
@@ -109,32 +135,26 @@ private class RollingContentView: UIView {
 	private var startIndex = 0
 	private var endIndex = 0
 
+
 	private var contentTop: CGFloat {
 		return orderedLayers.first?.top ?? MASTER_OFFSET
 	}
+
 
 	private var contentBottom: CGFloat {
 		return orderedLayers.last?.bottom ?? MASTER_OFFSET
 	}
 
-	fileprivate var contentHeight: CGFloat {
-		return contentBottom - contentTop
-	}
 
-
-	convenience init(parentWindowSize: CGSize, backgroundColor: UIColor?) {
+	convenience init(parentWindowWidth: CGFloat, backgroundColor: UIColor?) {
 		self.init()
-		frame = CGRect(x: 0, y: -MASTER_OFFSET, width: parentWindowSize.width, height: CONTENT_HEIGHT)
+		frame = CGRect(x: 0, y: -MASTER_OFFSET, width: parentWindowWidth, height: CONTENT_HEIGHT)
 		bgColor = backgroundColor
 	}
 
 
 	private var hostView: RollingView {
 		return superview as! RollingView
-	}
-
-
-	fileprivate func prefetchIfNeeded(withPirority edge: RollingView.Edge) {
 	}
 
 
@@ -148,7 +168,7 @@ private class RollingContentView: UIView {
 	}
 
 
-	fileprivate func addLayers(to edge: RollingView.Edge, startIndex: Int, layers: [CALayer]) {
+	fileprivate func addLayers(to edge: RollingView.Edge, startIndex: Int, layers: [CALayer], animated: Bool) {
 		var totalHeight: CGFloat = 0
 
 		switch edge {
@@ -180,6 +200,6 @@ private class RollingContentView: UIView {
 			}
 		}
 
-		hostView.contentDidAddSpace(edge: edge, addedHeight: totalHeight)
+		hostView.contentDidAddSpace(edge: edge, addedHeight: totalHeight, animated: animated)
 	}
 }

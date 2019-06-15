@@ -47,7 +47,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 	@IBAction func addAction(_ sender: UIButton) {
 		let edge = RollingView.Edge(rawValue: sender.tag)!
-		rollingView.addCells(edge, count: 1)
+		rollingView.addCells(edge, count: 1, animated: true)
 	}
 
 
@@ -61,6 +61,8 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 
 	@IBAction func insetAction(_ sender: Any) {
-		rollingView.contentInset.bottom = rollingView.contentInset.bottom > 0 ? 0 : 100
+		UIView.animate(withDuration: 0.25) {
+			self.rollingView.bottomInset = self.rollingView.bottomInset > 0 ? 0 : 100
+		}
 	}
 }
