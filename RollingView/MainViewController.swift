@@ -13,6 +13,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 	@IBOutlet weak var rollingView: RollingView!
 
+	@IBOutlet weak var topBar: UIVisualEffectView!
 	@IBOutlet weak var bottomBar: UIView!
 
 
@@ -50,6 +51,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 		super.viewDidLayoutSubviews()
 		if firstLayout {
 			firstLayout = false
+			rollingView.topInset = topBar.frame.height - view.safeAreaInsets.top
 			rollingView.bottomInset = bottomBar.frame.height
 		}
 	}

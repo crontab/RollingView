@@ -22,6 +22,27 @@
                                 <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
                                 <color key="backgroundColor" red="0.85297254789999999" green="0.85297254789999999" blue="0.85297254789999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             </view>
+                            <visualEffectView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="rlx-WY-biR">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="128"/>
+                                <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="Ece-Fs-dx8">
+                                    <rect key="frame" x="0.0" y="0.0" width="375" height="128"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                    <subviews>
+                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Bukowski speaking" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="HOm-HW-5Jg">
+                                            <rect key="frame" x="18" y="78" width="221" height="32"/>
+                                            <fontDescription key="fontDescription" type="system" weight="medium" pointSize="26"/>
+                                            <nil key="textColor"/>
+                                            <nil key="highlightedColor"/>
+                                        </label>
+                                    </subviews>
+                                    <constraints>
+                                        <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="HOm-HW-5Jg" secondAttribute="trailing" constant="18" id="Wi3-cM-KFF"/>
+                                        <constraint firstItem="HOm-HW-5Jg" firstAttribute="leading" secondItem="Ece-Fs-dx8" secondAttribute="leading" constant="18" id="kks-Un-tjn"/>
+                                        <constraint firstAttribute="bottom" secondItem="HOm-HW-5Jg" secondAttribute="bottom" constant="18" id="maL-zf-iEN"/>
+                                    </constraints>
+                                </view>
+                                <blurEffect style="light"/>
+                            </visualEffectView>
                             <visualEffectView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Y6a-GQ-gHO">
                                 <rect key="frame" x="0.0" y="728" width="375" height="84"/>
                                 <view key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="GV7-DW-5dL">
@@ -96,18 +117,23 @@
                         <constraints>
                             <constraint firstAttribute="bottom" secondItem="zfX-Wb-WJC" secondAttribute="bottom" id="2Fb-m4-6zh"/>
                             <constraint firstItem="Y6a-GQ-gHO" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="589-jx-rPN"/>
+                            <constraint firstItem="rlx-WY-biR" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="Bqh-q4-6E3"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="top" secondItem="rlx-WY-biR" secondAttribute="bottom" constant="-84" id="D3p-pS-gb7"/>
                             <constraint firstAttribute="bottom" secondItem="Y6a-GQ-gHO" secondAttribute="bottom" id="DEJ-X4-AXP"/>
                             <constraint firstItem="zfX-Wb-WJC" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="HFF-q9-nIs"/>
+                            <constraint firstItem="rlx-WY-biR" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="K8u-Re-Zw2"/>
                             <constraint firstItem="zfX-Wb-WJC" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="RYF-An-tgg"/>
                             <constraint firstItem="Y6a-GQ-gHO" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="bottom" constant="-50" id="Rba-GW-g4a"/>
                             <constraint firstItem="zfX-Wb-WJC" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="cu2-VR-Tnv"/>
                             <constraint firstItem="Y6a-GQ-gHO" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="pBt-DB-n0o"/>
+                            <constraint firstItem="rlx-WY-biR" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="ubk-Ez-MxZ"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
                     <connections>
                         <outlet property="bottomBar" destination="bRq-Ry-shQ" id="QzU-Y7-oi4"/>
                         <outlet property="rollingView" destination="zfX-Wb-WJC" id="jpc-bh-Jnw"/>
+                        <outlet property="topBar" destination="rlx-WY-biR" id="q5j-Jk-cyo"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>

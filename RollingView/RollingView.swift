@@ -87,7 +87,15 @@ class RollingView: UIScrollView {
 			let oldValue = bottomInset
 			contentInset.bottom = newValue
 			contentOffset.y += max(0, newValue - oldValue)
-			contentInset.top = max(0, safeBoundsHeight - contentSize.height - contentInset.bottom)
+			contentInset.top = max(topInset, safeBoundsHeight - contentSize.height - contentInset.bottom)
+		}
+	}
+
+
+	var topInset: CGFloat = 0 {
+		didSet {
+			layout()
+			contentInset.top = max(topInset, safeBoundsHeight - contentSize.height - contentInset.bottom - topInset)
 		}
 	}
 
@@ -101,14 +109,14 @@ class RollingView: UIScrollView {
 
 		switch edge {
 		case .top:
-			contentInset.top = max(0, delta)
-			contentOffset.y += max(0, -delta)
+			contentInset.top = max(topInset, delta)
+			contentOffset.y += max(0, -delta + topInset)
 			contentView.frame.top += addedHeight
 
 		case .bottom:
 			if distanceToBottom < 20 {
 				UIView.transition(with: self, duration: 0.25, options: .curveEaseInOut, animations: {
-					self.contentInset.top = max(0, delta)
+					self.contentInset.top = max(self.topInset, delta)
 					self.scrollRectToVisible(CGRect(x: 0, y: self.contentSize.height - 1, width: 1, height: 1), animated: false)
 				})
 			}
