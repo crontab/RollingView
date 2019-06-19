@@ -11,6 +11,7 @@ import UIKit
 
 protocol RollingViewDelegate: class {
 	func rollingView(_ rollingView: RollingView, cellLayerForIndex index: Int) -> CALayer
+	func rollingView(_ rollingView: RollingView, updateCellLayer layer: CALayer?, forIndex index: Int) -> CALayer
 }
 
 
@@ -35,6 +36,13 @@ class RollingView: UIScrollView {
 			return rollingViewDelegate?.rollingView(self, cellLayerForIndex: index) ?? CALayer()
 		}
 		contentView.addLayers(to: edge, startIndex: startIndex, layers: layers)
+	}
+
+
+	func refreshCell(atIndex index: Int) {
+		if let newLayer = rollingViewDelegate?.rollingView(self, updateCellLayer: contentView.layerForIndex(index), forIndex: index) {
+			contentView.replaceLayer(newLayer, atIndex: index)
+		}
 	}
 
 
@@ -206,5 +214,19 @@ private class RollingContentView: UIView {
 		}
 
 		hostView.contentDidAddSpace(edge: edge, addedHeight: totalHeight)
+	}
+
+
+	fileprivate func layerForIndex(_ index: Int) -> CALayer? {
+		return orderedLayers[index].layer
+	}
+
+
+	fileprivate func replaceLayer(_ layer: CALayer, atIndex index: Int) {
+		var placeholder = orderedLayers[index]
+		layer.frame.top = placeholder.top
+		placeholder.layer?.removeFromSuperlayer()
+		placeholder.layer = layer
+		self.layer.addSublayer(layer)
 	}
 }

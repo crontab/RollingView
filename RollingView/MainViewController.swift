@@ -64,6 +64,11 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	private var side: TextBubbleFactory.Side = .right
 
 	func rollingView(_ rollingView: RollingView, cellLayerForIndex index: Int) -> CALayer {
+		return self.rollingView(rollingView, updateCellLayer: nil, forIndex: index)
+	}
+
+
+	func rollingView(_ rollingView: RollingView, updateCellLayer layer: CALayer?, forIndex index: Int) -> CALayer {
 		side = side == .left ? .right : .left
 		let string = lines[abs(index) % lines.count]
 		return factories[side]!.create(width: view.frame.width, string: string)
