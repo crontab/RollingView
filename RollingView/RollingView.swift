@@ -12,6 +12,7 @@ import UIKit
 protocol RollingViewDelegate: class {
 	func rollingView(_ rollingView: RollingView, cellLayerForIndex index: Int) -> CALayer
 	func rollingView(_ rollingView: RollingView, updateCellLayer layer: CALayer?, forIndex index: Int) -> CALayer
+	func rollingViewCanAddMoreAbove(_ rollingView: RollingView) -> Bool
 }
 
 
@@ -29,6 +30,7 @@ class RollingView: UIScrollView {
 
 	func addCells(_ edge: Edge, count: Int) {
 		guard count > 0 else {
+			loadingMore = false
 			return
 		}
 		let startIndex = contentView.startIndexForEdge(edge, newLayerCount: count)
@@ -100,6 +102,40 @@ class RollingView: UIScrollView {
 	}
 
 
+	private var reachedEnd: Bool = false
+	private var loadingMore: Bool = false {
+		didSet {
+			if loadingMore {
+				contentView.refreshIndicator.startAnimating()
+			}
+			else {
+				contentView.refreshIndicator.stopAnimating()
+			}
+		}
+	}
+
+	override var contentOffset: CGPoint {
+		didSet {
+			if !firstLayout && !reachedEnd && !loadingMore {
+				let offset = contentOffset.y + contentInset.top + safeAreaInsets.top
+				if offset < frame.height {
+					loadingMore = true
+					DispatchQueue.main.async(execute: tryLoadMore)
+				}
+			}
+		}
+	}
+
+
+	private func tryLoadMore() {
+		let result = rollingViewDelegate?.rollingViewCanAddMoreAbove(self) ?? false
+		if !result {
+			loadingMore = false
+			reachedEnd = true
+		}
+	}
+
+
 	fileprivate func contentDidAddSpace(edge: Edge, addedHeight: CGFloat) {
 		layout()
 
@@ -121,6 +157,8 @@ class RollingView: UIScrollView {
 				})
 			}
 		}
+
+		loadingMore = false
 	}
 }
 
@@ -128,6 +166,7 @@ class RollingView: UIScrollView {
 
 private let CONTENT_HEIGHT: CGFloat = 10_000_000
 private let MASTER_OFFSET = CONTENT_HEIGHT / 2
+private let REFRESH_INDICATOR_TOP_OFFSET: CGFloat = -28
 
 
 private class RollingContentView: UIView {
@@ -148,6 +187,8 @@ private class RollingContentView: UIView {
 		}
 	}
 
+
+	fileprivate var refreshIndicator: UIActivityIndicatorView!
 
 	private var bgColor: UIColor?
 
@@ -171,6 +212,12 @@ private class RollingContentView: UIView {
 		self.init()
 		frame = CGRect(x: 0, y: -MASTER_OFFSET, width: parentWindowWidth, height: CONTENT_HEIGHT)
 		bgColor = backgroundColor
+
+		let indicatorSide: CGFloat = 20
+		refreshIndicator = UIActivityIndicatorView(frame: CGRect(x: (parentWindowWidth - indicatorSide) / 2, y: contentTop + REFRESH_INDICATOR_TOP_OFFSET, width: indicatorSide, height: indicatorSide))
+		refreshIndicator.autoresizingMask = [.flexibleLeftMargin]
+		refreshIndicator.style = .gray
+		addSubview(refreshIndicator)
 	}
 
 
@@ -221,6 +268,7 @@ private class RollingContentView: UIView {
 			}
 		}
 
+		refreshIndicator.frame.top = contentTop + REFRESH_INDICATOR_TOP_OFFSET
 		hostView.contentDidAddSpace(edge: edge, addedHeight: totalHeight)
 	}
 

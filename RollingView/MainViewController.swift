@@ -51,8 +51,8 @@ class MainViewController: UIViewController, RollingViewDelegate {
 		super.viewDidLayoutSubviews()
 		if firstLayout {
 			firstLayout = false
-			rollingView.topInset = topBar.frame.height - view.safeAreaInsets.top
-			rollingView.bottomInset = bottomBar.frame.height
+			rollingView.topInset = topBar.frame.height - view.safeAreaInsets.top + 16
+			rollingView.bottomInset = bottomBar.frame.height + 16
 		}
 	}
 
@@ -63,17 +63,23 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	}
 
 
-	private var side: TextBubbleFactory.Side = .right
-
 	func rollingView(_ rollingView: RollingView, cellLayerForIndex index: Int) -> CALayer {
 		return self.rollingView(rollingView, updateCellLayer: nil, forIndex: index)
 	}
 
 
 	func rollingView(_ rollingView: RollingView, updateCellLayer layer: CALayer?, forIndex index: Int) -> CALayer {
-		side = side == .left ? .right : .left
+		let side = TextBubbleFactory.Side(rawValue: Int.random(in: 0...1))!
 		let string = lines[abs(index) % lines.count]
 		return factories[side]!.create(width: view.frame.width, string: string)
+	}
+
+
+	func rollingViewCanAddMoreAbove(_ rollingView: RollingView) -> Bool {
+		DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+			rollingView.addCells(.top, count: 20)
+		}
+		return true
 	}
 
 
