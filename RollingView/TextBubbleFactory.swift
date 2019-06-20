@@ -1,5 +1,5 @@
 //
-//  TextBubbleLayer.swift
+//  TextBubbleFactory.swift
 //  RollingView
 //
 //  Created by Hovik Melikyan on 09/06/2019.
@@ -12,38 +12,60 @@ import UIKit
 typealias StringAttributes = [NSAttributedString.Key: Any]
 
 
+class LeftBubbleFactory: TextBubbleFactory {
+
+	override init() {
+		super.init()
+		isRightSide = false
+		font = UIFont.systemFont(ofSize: 16, weight: .medium)
+		textColor = UIColor.black
+		bubbleColor = UIColor(red:0.95, green:0.94, blue:0.94, alpha:1)
+		margins.right = 100
+	}
+}
+
+
+
+class RightBubbleFactory: TextBubbleFactory {
+
+	override init() {
+		super.init()
+		font = UIFont.systemFont(ofSize: 16, weight: .medium)
+		textColor = UIColor.white
+		bubbleColor = UIColor(red:0, green:0.53, blue:1, alpha:1)
+		margins.left = 100
+	}
+}
+
+
+
 class TextBubbleFactory {
 
-	enum Side: Int {
-		case left
-		case right
-	}
+	fileprivate var isRightSide = true
 
-	var bubbleSide: Side = .left
-
-	var textAlignment: NSTextAlignment {
+	fileprivate var textAlignment: NSTextAlignment {
 		get { return (attributes[.paragraphStyle] as! NSMutableParagraphStyle).alignment }
 		set { (attributes[.paragraphStyle] as! NSMutableParagraphStyle).alignment = newValue }
 	}
 
-	var font: UIFont? {
+	fileprivate var font: UIFont? {
 		get { return attributes[.font] as? UIFont }
 		set { attributes[.font] = newValue }
 	}
 
-	var textColor: UIColor? {
+	fileprivate var textColor: UIColor? {
 		get { return attributes[.foregroundColor] as? UIColor }
 		set { attributes[.foregroundColor] = newValue }
 	}
 
-	var insets = UIEdgeInsets(top: 6, left: 12, bottom: 8, right: 12)
+	fileprivate var insets = UIEdgeInsets(top: 9, left: 15, bottom: 9, right: 15)
 
-	var margins = UIEdgeInsets(top: 6, left: 6, bottom: 6, right: 6)
+	fileprivate var margins = UIEdgeInsets(top: 2, left: 10, bottom: 2, right: 10)
 
-	var bubbleColor: UIColor? = UIColor(red: 50 / 255, green: 135 / 255, blue: 255 / 255, alpha: 1) // standard tint color
-	var backgroundColor = UIColor.white
+	fileprivate var bubbleColor: UIColor? = UIColor(red: 50 / 255, green: 135 / 255, blue: 255 / 255, alpha: 1) // standard tint color
+	fileprivate var backgroundColor = UIColor.white
 
-	var cornerRadius: CGFloat = 8
+	fileprivate var cornerRadius: CGFloat = 16
 
 
 	private var attributes: StringAttributes = [.paragraphStyle: NSParagraphStyle.default.mutableCopy() as! NSMutableParagraphStyle]
@@ -57,11 +79,11 @@ class TextBubbleFactory {
 		let bubbleLayer = CALayer()
 		bubbleLayer.frame.size = CGSize(width: textLayer.frame.right + insets.right, height: textLayer.frame.bottom + insets.bottom)
 		bubbleLayer.backgroundColor = bubbleColor?.cgColor
-		bubbleLayer.cornerRadius = cornerRadius
+		bubbleLayer.cornerRadius = min(cornerRadius, bubbleLayer.frame.height / 2)
 		bubbleLayer.addSublayer(textLayer)
 		bubbleLayer.frame.left += margins.left
 		bubbleLayer.frame.top += margins.top
-		if bubbleSide == .right {
+		if isRightSide {
 			bubbleLayer.frame.left += width - margins.right - bubbleLayer.frame.right
 		}
 

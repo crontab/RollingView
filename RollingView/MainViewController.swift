@@ -17,7 +17,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	@IBOutlet weak var bottomBar: UIView!
 
 
-	private var factories: [TextBubbleFactory.Side: TextBubbleFactory]!
+	private var factories = [LeftBubbleFactory(), RightBubbleFactory()]
 
 	private var lines = try! String(contentsOfFile: Bundle.main.path(forResource: "Bukowski", ofType: "txt")!, encoding: .utf8).components(separatedBy: .newlines).filter { !$0.isEmpty }
 
@@ -28,20 +28,6 @@ class MainViewController: UIViewController, RollingViewDelegate {
 		rollingView.alwaysBounceVertical = true
 		// rollingView.showsVerticalScrollIndicator = false
 		rollingView.rollingViewDelegate = self
-
-		let leftFactory = TextBubbleFactory()
-		leftFactory.font = UIFont.systemFont(ofSize: 17, weight: .regular)
-		leftFactory.textColor = UIColor.white
-		leftFactory.margins.right = 100
-
-		let rightFactory = TextBubbleFactory()
-		rightFactory.font = leftFactory.font
-		rightFactory.textColor = UIColor.black
-		rightFactory.bubbleSide = .right
-		rightFactory.margins.left = leftFactory.margins.right
-		rightFactory.bubbleColor = UIColor(red: 231 / 255, green: 231 / 255, blue: 231 / 255, alpha: 1)
-
-		factories = [.left: leftFactory, .right: rightFactory]
 	}
 
 
@@ -69,9 +55,9 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 
 	func rollingView(_ rollingView: RollingView, updateCellLayer layer: CALayer?, forIndex index: Int) -> CALayer {
-		let side = TextBubbleFactory.Side(rawValue: Int.random(in: 0...1))!
+		let factory = factories[Int.random(in: 0...1)]
 		let string = lines[abs(index) % lines.count]
-		return factories[side]!.create(width: view.frame.width, string: string)
+		return factory.create(width: view.frame.width, string: string)
 	}
 
 
