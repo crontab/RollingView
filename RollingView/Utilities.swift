@@ -6,7 +6,6 @@
 //  Copyright © 2019 Hovik Melikyan. All rights reserved.
 //
 
-import Foundation
 import UIKit
 
 
@@ -53,5 +52,24 @@ extension Array where Element: Comparable {
 			}
 		}
 		return low
+	}
+}
+
+
+public extension String {
+
+	func size(withFont font: UIFont) -> CGSize {
+		return (self as NSString).size(withAttributes: [NSAttributedString.Key.font: font])
+	}
+}
+
+
+public extension UIColor {
+
+	var isDark: Bool {
+		var white: CGFloat = 1
+		var alpha: CGFloat = 1
+		getWhite(&white, alpha: &alpha)
+		return white < 0.8
 	}
 }
