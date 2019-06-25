@@ -250,11 +250,7 @@ class PredefinedTags {
 		return UIColor(red: 230 / 255, green: 73 / 255, blue: 128 / 255, alpha: 1)
 	}()
 
-	static var defaultIcon: UIImage = {
-		return UIImage(named: "icon-hashtag")!
-	}()
-
-	// private static var customTagTemplate: Tag? // will be set by the next backend request
+	static var customTagTemplate = Tag(id: ".custom", color: "230,73,128")
 	static var placeTagTemplate = Tag(id: ".place", color: "225,225,225")
 	static var timeTagTemplate = Tag(id: ".time", color: "225,225,225")
 
@@ -262,6 +258,11 @@ class PredefinedTags {
 	private(set) static var all: TagDict = {
 		return parseTags(tags: try! jsonDecoder.decode([Tag].self, from: try! Data(contentsOf: Bundle.main.url(forResource: "predefined-tags", withExtension: "json")!)))
 	}()
+
+
+	static func preload() {
+		_ = all
+	}
 
 
 	private static func parseTags(tags: [Tag]) -> TagDict {
@@ -283,7 +284,7 @@ class PredefinedTags {
 				}
 			}
 		}
-		// PredefinedTags.customTagTemplate = dict[Tag.CUSTOM_TAG_ID] ?? PredefinedTags.customTagTemplate
+		PredefinedTags.customTagTemplate = dict[Tag.CUSTOM_TAG_ID] ?? PredefinedTags.customTagTemplate
 		PredefinedTags.placeTagTemplate = dict[Tag.PLACE_TAG_ID] ?? PredefinedTags.placeTagTemplate
 		PredefinedTags.timeTagTemplate = dict[Tag.TIME_TAG_ID] ?? PredefinedTags.timeTagTemplate
 		return dict
@@ -296,4 +297,39 @@ class PredefinedTags {
 		result.dateDecodingStrategy = .formatted(DateFormatter.iso8601WithMS)
 		return result
 	}()
+}
+
+
+
+extension Tag {
+
+	var uiColor: UIColor {
+		if let color = color {
+			let codes = color.components(separatedBy: ",").map { return CGFloat(Int($0) ?? 0) }
+			if codes.count == 3 {
+				return UIColor(red: codes[0] / 255, green: codes[1] / 255, blue: codes[2] / 255, alpha: 1)
+			}
+		}
+		return PredefinedTags.defaultColor
+	}
+
+
+	var isSpecial: Bool {
+		return id.hasPrefix(".")
+	}
+
+
+	var displayTitle: String {
+		return (title ?? id).lowercased()
+	}
+
+
+	var displaySubtitle: String {
+		if let postCount = postCount, postCount > 0 {
+			return String(format: "%d posts", locale: Locale.current, postCount)
+		}
+		else {
+			return (subtitle ?? "custom tag").lowercased()
+		}
+	}
 }

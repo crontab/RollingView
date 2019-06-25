@@ -10,6 +10,9 @@
 		3601991F22C1154E007FB50B /* ChatStructures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3601991E22C1154E007FB50B /* ChatStructures.swift */; };
 		3601992122C1166E007FB50B /* DateUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3601992022C1166E007FB50B /* DateUtils.swift */; };
 		3601992322C12694007FB50B /* predefined-tags.json in Resources */ = {isa = PBXBuildFile; fileRef = 3601992222C1267C007FB50B /* predefined-tags.json */; };
+		3601992522C22DE9007FB50B /* CachingLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3601992422C22DE9007FB50B /* CachingLoader.swift */; };
+		3601992722C22E13007FB50B /* FileDownloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3601992622C22E13007FB50B /* FileDownloader.swift */; };
+		3601992A22C22F23007FB50B /* CachingImageLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3601992922C22F23007FB50B /* CachingImageLoader.swift */; };
 		3612145522A85B7A000536A0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3612145422A85B7A000536A0 /* AppDelegate.swift */; };
 		3612145722A85B7A000536A0 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3612145622A85B7A000536A0 /* MainViewController.swift */; };
 		3612145A22A85B7A000536A0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3612145822A85B7A000536A0 /* Main.storyboard */; };
@@ -25,6 +28,10 @@
 		3601991E22C1154E007FB50B /* ChatStructures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatStructures.swift; sourceTree = "<group>"; };
 		3601992022C1166E007FB50B /* DateUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateUtils.swift; sourceTree = "<group>"; };
 		3601992222C1267C007FB50B /* predefined-tags.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "predefined-tags.json"; sourceTree = "<group>"; };
+		3601992422C22DE9007FB50B /* CachingLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachingLoader.swift; sourceTree = "<group>"; };
+		3601992622C22E13007FB50B /* FileDownloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileDownloader.swift; sourceTree = "<group>"; };
+		3601992822C22ED5007FB50B /* ObjC-Bridging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ObjC-Bridging.h"; sourceTree = "<group>"; };
+		3601992922C22F23007FB50B /* CachingImageLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachingImageLoader.swift; sourceTree = "<group>"; };
 		3612145122A85B7A000536A0 /* RollingView.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RollingView.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3612145422A85B7A000536A0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		3612145622A85B7A000536A0 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
@@ -70,6 +77,9 @@
 			children = (
 				36375B5722AA4AF400DBE33F /* Utilities.swift */,
 				3601992022C1166E007FB50B /* DateUtils.swift */,
+				3601992622C22E13007FB50B /* FileDownloader.swift */,
+				3601992422C22DE9007FB50B /* CachingLoader.swift */,
+				3601992922C22F23007FB50B /* CachingImageLoader.swift */,
 				3601991E22C1154E007FB50B /* ChatStructures.swift */,
 				3612146F22A8644A000536A0 /* RollingView.swift */,
 				36C884EA22AC8CF40008EEC5 /* TextBubbleFactory.swift */,
@@ -81,6 +91,7 @@
 				3612146322A85B7C000536A0 /* Info.plist */,
 				3612146B22A85ED2000536A0 /* Bukowski.txt */,
 				3601992222C1267C007FB50B /* predefined-tags.json */,
+				3601992822C22ED5007FB50B /* ObjC-Bridging.h */,
 			);
 			path = RollingView;
 			sourceTree = "<group>";
@@ -160,9 +171,12 @@
 			files = (
 				3612145722A85B7A000536A0 /* MainViewController.swift in Sources */,
 				3601991F22C1154E007FB50B /* ChatStructures.swift in Sources */,
+				3601992522C22DE9007FB50B /* CachingLoader.swift in Sources */,
 				3612145522A85B7A000536A0 /* AppDelegate.swift in Sources */,
 				36375B5822AA4AF400DBE33F /* Utilities.swift in Sources */,
 				3601992122C1166E007FB50B /* DateUtils.swift in Sources */,
+				3601992A22C22F23007FB50B /* CachingImageLoader.swift in Sources */,
+				3601992722C22E13007FB50B /* FileDownloader.swift in Sources */,
 				36C884EB22AC8CF40008EEC5 /* TextBubbleFactory.swift in Sources */,
 				3612147022A8644A000536A0 /* RollingView.swift in Sources */,
 			);
@@ -247,6 +261,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OBJC_BRIDGING_HEADER = "RollingView/ObjC-Bridging.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -301,6 +316,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OBJC_BRIDGING_HEADER = "RollingView/ObjC-Bridging.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				VALIDATE_PRODUCT = YES;
 			};
