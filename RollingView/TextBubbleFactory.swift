@@ -37,11 +37,26 @@ private let TAG_SHOW_ICON = true
 
 
 
+class BubbleLayer: CALayer {
+	var text: String
+
+	init(text: String) {
+		self.text = text
+		super.init()
+	}
+
+	required init?(coder aDecoder: NSCoder) {
+		fatalError("init(coder:) has not been implemented")
+	}
+}
+
+
+
 class ContextBubbleFactory {
 
-	func create(width: CGFloat, scale: CGFloat, isRightSide: Bool, title: String, attr: VideoAttributes, videoThumbnailUrl: String?) -> CALayer {
+	func create(width: CGFloat, scale: CGFloat, isRightSide: Bool, title: String, attr: VideoAttributes, videoThumbnailUrl: String?) -> BubbleLayer {
 
-		let host = CALayer()
+		let host = BubbleLayer(text: attr.tags.joined(separator: ", "))
 		host.frame = CGRect(x: 0, y: 0, width: width, height: CONTEXT_MASTER_INSETS.top + CONTEXT_MASTER_INSETS.bottom)
 
 		// Master layer with a grey frame around it
@@ -105,7 +120,8 @@ class ContextBubbleFactory {
 
 		master.frame.size.height = max(thumb.frame.bottom, tags.frame.bottom) + CONTEXT_MASTER_INSETS.bottom
 
-		return master
+		host.frame.size.height = master.frame.height + STANDARD_MARGINS.top + STANDARD_MARGINS.bottom
+		return host
 	}
 
 
@@ -268,7 +284,7 @@ class TextBubbleFactory {
 	private var attributes: StringAttributes = [.paragraphStyle: NSParagraphStyle.default.mutableCopy() as! NSMutableParagraphStyle]
 
 
-	func create(width: CGFloat, string: String) -> CALayer {
+	func create(width: CGFloat, string: String) -> BubbleLayer {
 		let textLayer = TextLayer(maxWidth: width - insets.left - insets.right - margins.left - margins.right, string: string, attributes: attributes)
 		textLayer.frame.left += insets.left
 		textLayer.frame.top += insets.top
@@ -284,7 +300,7 @@ class TextBubbleFactory {
 			bubbleLayer.frame.left += width - margins.right - bubbleLayer.frame.right
 		}
 
-		let layer = CALayer()
+		let layer = BubbleLayer(text: string)
 		layer.frame.size = CGSize(width: width, height: bubbleLayer.frame.bottom + margins.bottom)
 		layer.backgroundColor = backgroundColor.cgColor
 		layer.addSublayer(bubbleLayer)

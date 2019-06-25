@@ -38,24 +38,6 @@ extension CGRect {
 
 
 
-extension Array where Element: Comparable {
-
-	func binarySearch(_ item: Element) -> Index {
-		var low = 0
-		var high = count
-		while low != high {
-			let mid = (low + high) / 2
-			if self[mid] < item {
-				low = mid + 1
-			} else {
-				high = mid
-			}
-		}
-		return low
-	}
-}
-
-
 extension Data {
 
 	func toURLSafeBase64() -> String {

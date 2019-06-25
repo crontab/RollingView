@@ -21,6 +21,10 @@
                             <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="zfX-Wb-WJC" customClass="RollingView" customModule="RollingView" customModuleProvider="target">
                                 <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <gestureRecognizers/>
+                                <connections>
+                                    <outletCollection property="gestureRecognizers" destination="x24-Db-MsE" appends="YES" id="88g-eY-iX4"/>
+                                </connections>
                             </view>
                             <visualEffectView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="rlx-WY-biR">
                                 <rect key="frame" x="0.0" y="0.0" width="375" height="128"/>
@@ -137,6 +141,11 @@
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+                <tapGestureRecognizer id="x24-Db-MsE">
+                    <connections>
+                        <action selector="tapAction:" destination="BYZ-38-t0r" id="kAv-3X-Seg"/>
+                    </connections>
+                </tapGestureRecognizer>
             </objects>
             <point key="canvasLocation" x="133.59999999999999" y="125.61576354679804"/>
         </scene>

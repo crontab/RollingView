@@ -95,4 +95,11 @@ class MainViewController: UIViewController, RollingViewDelegate {
 			self.rollingView.bottomInset = self.bottomBar.frame.height + (self.kbShown ? 300 : 0)
 		}
 	}
+
+
+	@IBAction func tapAction(_ sender: UITapGestureRecognizer) {
+		let point = sender.location(in: rollingView)
+		print((rollingView.layerFromPoint(point) as? BubbleLayer)?.text ?? "?")
+	}
+
 }

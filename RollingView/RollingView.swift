@@ -48,6 +48,11 @@ class RollingView: UIScrollView {
 	}
 
 
+	func layerFromPoint(_ point: CGPoint) -> CALayer? {
+		return contentView.layerFromPoint(convert(point, to: contentView))
+	}
+
+
 	// Private/protected
 
 	private var contentView: RollingContentView!
@@ -171,7 +176,7 @@ private let REFRESH_INDICATOR_TOP_OFFSET: CGFloat = -28
 
 private class RollingContentView: UIView {
 
-	private struct Placeholder {
+	fileprivate struct Placeholder {
 		var layer: CALayer? // can be discarded to save memory; this provides our caching mechanism essentially (not yet)
 		var top: CGFloat
 		var height: CGFloat
@@ -284,5 +289,31 @@ private class RollingContentView: UIView {
 		placeholder.layer?.removeFromSuperlayer()
 		placeholder.layer = layer
 		self.layer.addSublayer(layer)
+	}
+
+
+	fileprivate func layerFromPoint(_ point: CGPoint) -> CALayer? {
+		let index = orderedLayers.binarySearch(top: point.y) - 1
+		if index >= 0 && index < orderedLayers.count, let layer = orderedLayers[index].layer, layer.frame.contains(point) {
+			return layer
+		}
+		return nil
+	}
+}
+
+
+private extension Array where Element == RollingContentView.Placeholder {
+	func binarySearch(top: CGFloat) -> Index {
+		var low = 0
+		var high = count
+		while low != high {
+			let mid = (low + high) / 2
+			if self[mid].top < top {
+				low = mid + 1
+			} else {
+				high = mid
+			}
+		}
+		return low
 	}
 }
