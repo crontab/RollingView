@@ -12,7 +12,7 @@ import UIKit
 protocol RollingViewDelegate: class {
 	func rollingView(_ rollingView: RollingView, cellLayerForIndex index: Int) -> CALayer
 	func rollingView(_ rollingView: RollingView, updateCellLayer layer: CALayer?, forIndex index: Int) -> CALayer
-	func rollingViewCanAddMoreAbove(_ rollingView: RollingView) -> Bool
+	func rollingViewCanAddCellsAbove(_ rollingView: RollingView, completion: @escaping (_ tryAgain: Bool) -> Void)
 }
 
 
@@ -77,7 +77,6 @@ class RollingView: UIScrollView {
 		if firstLayout {
 			firstLayout = false
 			contentSize.width = frame.width
-			contentInset.top = safeBoundsHeight - contentInset.bottom
 		}
 	}
 
@@ -91,18 +90,17 @@ class RollingView: UIScrollView {
 		get { return contentInset.bottom }
 		set {
 			layout()
-			let oldValue = bottomInset
 			contentInset.bottom = newValue
-			contentOffset.y += max(0, newValue - oldValue)
-			contentInset.top = max(topInset, safeBoundsHeight - contentSize.height - contentInset.bottom)
+			self.scrollRectToVisible(CGRect(x: 0, y: self.contentSize.height - 1, width: 1, height: 1), animated: false)
 		}
 	}
 
 
-	var topInset: CGFloat = 0 {
-		didSet {
+	var topInset: CGFloat {
+		get { return contentInset.top }
+		set {
 			layout()
-			contentInset.top = max(topInset, safeBoundsHeight - contentSize.height - contentInset.bottom - topInset)
+			contentInset.top = newValue
 		}
 	}
 
@@ -133,10 +131,14 @@ class RollingView: UIScrollView {
 
 
 	private func tryLoadMore() {
-		let result = rollingViewDelegate?.rollingViewCanAddMoreAbove(self) ?? false
-		if !result {
+		guard let rollingViewDelegate = rollingViewDelegate else {
 			loadingMore = false
 			reachedEnd = true
+			return
+		}
+		rollingViewDelegate.rollingViewCanAddCellsAbove(self) { (tryAgain) in
+			self.loadingMore = false
+			self.reachedEnd = !tryAgain
 		}
 	}
 
@@ -146,18 +148,16 @@ class RollingView: UIScrollView {
 
 		let distanceToBottom = contentSize.height + contentInset.bottom - (contentOffset.y + bounds.height)
 		contentSize.height += addedHeight
-		let delta = contentInset.top - addedHeight
 
 		switch edge {
 		case .top:
-			contentInset.top = max(topInset, delta)
-			contentOffset.y += max(0, -delta + topInset)
+			let delta = safeBoundsHeight - contentInset.top - contentInset.bottom - contentSize.height
+			contentOffset.y += max(0, min(addedHeight, -delta))
 			contentView.frame.top += addedHeight
 
 		case .bottom:
 			if distanceToBottom < 20 {
 				UIView.transition(with: self, duration: 0.25, options: .curveEaseInOut, animations: {
-					self.contentInset.top = max(self.topInset, delta)
 					self.scrollRectToVisible(CGRect(x: 0, y: self.contentSize.height - 1, width: 1, height: 1), animated: false)
 				})
 			}

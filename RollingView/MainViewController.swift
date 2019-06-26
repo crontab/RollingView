@@ -78,12 +78,11 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	}
 
 
-	func rollingViewCanAddMoreAbove(_ rollingView: RollingView) -> Bool {
+	func rollingViewCanAddCellsAbove(_ rollingView: RollingView, completion: @escaping (Bool) -> Void) {
 //		DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
 //			rollingView.addCells(.top, count: 20)
 //		}
-//		return true
-		return false
+		completion(false)
 	}
 
 
