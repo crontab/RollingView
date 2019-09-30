@@ -18,11 +18,8 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 
 	private let factories = [LeftBubbleFactory(), RightBubbleFactory()]
-	private let contextFactory = ContextBubbleFactory()
 
 	private var lines = try! String(contentsOfFile: Bundle.main.path(forResource: "Bukowski", ofType: "txt")!, encoding: .utf8).components(separatedBy: .newlines).filter { !$0.isEmpty }
-
-	private var layerCount = 0
 
 
 	override func viewDidLoad() {
@@ -31,8 +28,6 @@ class MainViewController: UIViewController, RollingViewDelegate {
 		rollingView.alwaysBounceVertical = true
 		// rollingView.showsVerticalScrollIndicator = false
 		rollingView.rollingViewDelegate = self
-
-		PredefinedTags.preload()
 	}
 
 
@@ -61,20 +56,9 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 
 	func rollingView(_ rollingView: RollingView, updateCellLayer layer: CALayer?, forIndex index: Int) -> CALayer {
-		layerCount += 1
-		if layerCount == 1 {
-			let attr = VideoAttributes()
-			attr.tags = ["tennis", "vegan", "sleep", "sonar2019"]
-			attr.place = PlaceTag()
-			attr.place!.name = "Ledru-Rollin"
-			attr.time = TimeTag()
-			return contextFactory.create(width: view.frame.width, scale: 1, isRightSide: true, title: "Maria contacted you because you set yourself available for:", attr: attr, videoThumbnailUrl: "https://s3-eu-west-1.amazonaws.com/transcodedvideoselevenstagingeuwest1/EVID_64989c03-4bf4-41de-b58a-7505a7143422_46795f80-972e-11e9-9396-87eb950a6879_774923.JPG")
-		}
-		else {
-			let factory = factories[Int.random(in: 0...1)]
-			let string = lines[abs(index) % lines.count]
-			return factory.create(width: view.frame.width, string: string)
-		}
+		let factory = factories[Int.random(in: 0...1)]
+		let string = lines[abs(index) % lines.count]
+		return factory.create(width: view.frame.width, string: string)
 	}
 
 
