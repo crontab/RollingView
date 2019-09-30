@@ -10,8 +10,7 @@ import UIKit
 
 
 protocol RollingViewDelegate: class {
-	func rollingView(_ rollingView: RollingView, cellLayerForIndex index: Int) -> CALayer
-	func rollingView(_ rollingView: RollingView, updateCellLayer layer: CALayer?, forIndex index: Int) -> CALayer
+	func rollingView(_ rollingView: RollingView, cellForIndex index: Int) -> UIView
 	func rollingViewCanAddCellsAbove(_ rollingView: RollingView, completion: @escaping (_ tryAgain: Bool) -> Void)
 }
 
@@ -33,23 +32,16 @@ class RollingView: UIScrollView {
 			loadingMore = false
 			return
 		}
-		let startIndex = contentView.startIndexForEdge(edge, newLayerCount: count)
-		let layers = (startIndex..<(startIndex + count)).map { (index) -> CALayer in
-			return rollingViewDelegate?.rollingView(self, cellLayerForIndex: index) ?? CALayer()
+		let startIndex = contentView.startIndexForEdge(edge, newViewCount: count)
+		let views = (startIndex..<(startIndex + count)).map { (index) -> UIView in
+			return rollingViewDelegate?.rollingView(self, cellForIndex: index) ?? UIView()
 		}
-		contentView.addLayers(to: edge, startIndex: startIndex, layers: layers)
+		contentView.addViews(to: edge, startIndex: startIndex, views: views)
 	}
 
 
-	func refreshCell(atIndex index: Int) {
-		if let newLayer = rollingViewDelegate?.rollingView(self, updateCellLayer: contentView.layerForIndex(index), forIndex: index) {
-			contentView.replaceLayer(newLayer, atIndex: index)
-		}
-	}
-
-
-	func layerFromPoint(_ point: CGPoint) -> CALayer? {
-		return contentView.layerFromPoint(convert(point, to: contentView))
+	func viewFromPoint(_ point: CGPoint) -> UIView? {
+		return contentView.viewFromPoint(convert(point, to: contentView))
 	}
 
 
@@ -62,7 +54,7 @@ class RollingView: UIScrollView {
 	override func awakeFromNib() {
 		super.awakeFromNib()
 		contentView = RollingContentView(parentWindowWidth: frame.width, backgroundColor: backgroundColor)
-		contentView.autoresizingMask = .flexibleWidth
+		contentView.autoresizingMask = [.flexibleWidth, .flexibleBottomMargin]
 		insertSubview(contentView, at: 0)
 	}
 
@@ -116,6 +108,7 @@ class RollingView: UIScrollView {
 			}
 		}
 	}
+
 
 	override var contentOffset: CGPoint {
 		didSet {
@@ -177,7 +170,7 @@ private let REFRESH_INDICATOR_TOP_OFFSET: CGFloat = -28
 private class RollingContentView: UIView {
 
 	fileprivate struct Placeholder {
-		var layer: CALayer? // can be discarded to save memory; this provides our caching mechanism essentially (not yet)
+		var cachedView: UIView? // can be discarded to save memory; this provides our caching mechanism essentially (not yet)
 		var top: CGFloat
 		var height: CGFloat
 
@@ -185,10 +178,10 @@ private class RollingContentView: UIView {
 			return top + height
 		}
 
-		init(layer: CALayer) {
-			self.layer = layer
-			self.top = layer.frame.top
-			self.height = layer.frame.height
+		init(view: UIView) {
+			self.cachedView = view
+			self.top = view.frame.top
+			self.height = view.frame.height
 		}
 	}
 
@@ -197,19 +190,19 @@ private class RollingContentView: UIView {
 
 	private var bgColor: UIColor?
 
-	private var orderedLayers: [Placeholder] = []	// ordered by the `y` coordinate
+	private var orderedViews: [Placeholder] = []	// ordered by the `y` coordinate
 
 	private var startIndex = 0
 	private var endIndex = 0
 
 
 	private var contentTop: CGFloat {
-		return orderedLayers.first?.top ?? MASTER_OFFSET
+		return orderedViews.first?.top ?? MASTER_OFFSET
 	}
 
 
 	private var contentBottom: CGFloat {
-		return orderedLayers.last?.bottom ?? MASTER_OFFSET
+		return orderedViews.last?.bottom ?? MASTER_OFFSET
 	}
 
 
@@ -220,7 +213,7 @@ private class RollingContentView: UIView {
 
 		let indicatorSide: CGFloat = 20
 		refreshIndicator = UIActivityIndicatorView(frame: CGRect(x: (parentWindowWidth - indicatorSide) / 2, y: contentTop + REFRESH_INDICATOR_TOP_OFFSET, width: indicatorSide, height: indicatorSide))
-		refreshIndicator.autoresizingMask = [.flexibleLeftMargin]
+		refreshIndicator.autoresizingMask = [.flexibleLeftMargin, .flexibleRightMargin]
 		refreshIndicator.style = .gray
 		addSubview(refreshIndicator)
 	}
@@ -231,7 +224,7 @@ private class RollingContentView: UIView {
 	}
 
 
-	fileprivate func startIndexForEdge(_ edge: RollingView.Edge, newLayerCount count: Int) -> Int {
+	fileprivate func startIndexForEdge(_ edge: RollingView.Edge, newViewCount count: Int) -> Int {
 		switch edge {
 		case .top:
 			return startIndex - count
@@ -241,35 +234,35 @@ private class RollingContentView: UIView {
 	}
 
 
-	fileprivate func addLayers(to edge: RollingView.Edge, startIndex: Int, layers: [CALayer]) {
+	fileprivate func addViews(to edge: RollingView.Edge, startIndex: Int, views: [UIView]) {
 		var totalHeight: CGFloat = 0
 
 		switch edge {
 
 		case .top:
-			precondition(startIndex + layers.count == self.startIndex)
+			precondition(startIndex + views.count == self.startIndex)
 			self.startIndex = startIndex
-			var newLayers: [Placeholder] = []
+			var newViews: [Placeholder] = []
 			var top: CGFloat = contentTop
-			for layer in layers.reversed() {
-				let layerHeight = layer.frame.height
-				top -= layerHeight
-				totalHeight += layerHeight
-				layer.frame.top = top
-				newLayers.append(Placeholder(layer: layer))
-				self.layer.addSublayer(layer)
+			for view in views.reversed() {
+				let viewHeight = view.frame.height
+				top -= viewHeight
+				totalHeight += viewHeight
+				view.frame.top = top
+				newViews.append(Placeholder(view: view))
+				self.addSubview(view)
 			}
-			orderedLayers.insert(contentsOf: newLayers.reversed(), at: 0)
+			orderedViews.insert(contentsOf: newViews.reversed(), at: 0)
 
 		case .bottom:
 			precondition(startIndex == endIndex)
-			self.endIndex += layers.count
-			for layer in layers {
-				let layerHeight = layer.frame.height
-				totalHeight += layerHeight
-				layer.frame.top = contentBottom
-				orderedLayers.append(Placeholder(layer: layer))
-				self.layer.addSublayer(layer)
+			self.endIndex += views.count
+			for view in views {
+				let viewHeight = view.frame.height
+				totalHeight += viewHeight
+				view.frame.top = contentBottom
+				orderedViews.append(Placeholder(view: view))
+				self.addSubview(view)
 			}
 		}
 
@@ -278,24 +271,10 @@ private class RollingContentView: UIView {
 	}
 
 
-	fileprivate func layerForIndex(_ index: Int) -> CALayer? {
-		return orderedLayers[index].layer
-	}
-
-
-	fileprivate func replaceLayer(_ layer: CALayer, atIndex index: Int) {
-		var placeholder = orderedLayers[index]
-		layer.frame.top = placeholder.top
-		placeholder.layer?.removeFromSuperlayer()
-		placeholder.layer = layer
-		self.layer.addSublayer(layer)
-	}
-
-
-	fileprivate func layerFromPoint(_ point: CGPoint) -> CALayer? {
-		let index = orderedLayers.binarySearch(top: point.y) - 1
-		if index >= 0 && index < orderedLayers.count, let layer = orderedLayers[index].layer, layer.frame.contains(point) {
-			return layer
+	fileprivate func viewFromPoint(_ point: CGPoint) -> UIView? {
+		let index = orderedViews.binarySearch(top: point.y) - 1
+		if index >= 0 && index < orderedViews.count, let view = orderedViews[index].cachedView, view.frame.contains(point) {
+			return view
 		}
 		return nil
 	}

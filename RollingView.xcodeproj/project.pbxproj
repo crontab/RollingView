@@ -17,13 +17,14 @@
 		3612146C22A85ED2000536A0 /* Bukowski.txt in Resources */ = {isa = PBXBuildFile; fileRef = 3612146B22A85ED2000536A0 /* Bukowski.txt */; };
 		3612147022A8644A000536A0 /* RollingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3612146F22A8644A000536A0 /* RollingView.swift */; };
 		36375B5822AA4AF400DBE33F /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36375B5722AA4AF400DBE33F /* Utilities.swift */; };
-		36C884EB22AC8CF40008EEC5 /* TextBubbleFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36C884EA22AC8CF40008EEC5 /* TextBubbleFactory.swift */; };
+		368DC4F323423922000C810B /* LeftChatBubble.xib in Resources */ = {isa = PBXBuildFile; fileRef = 368DC4F223423921000C810B /* LeftChatBubble.xib */; };
+		368DC4F5234239DF000C810B /* ChatBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = 368DC4F4234239DF000C810B /* ChatBubble.swift */; };
+		368DC4F7234241D4000C810B /* RightChatBubble.xib in Resources */ = {isa = PBXBuildFile; fileRef = 368DC4F6234241D4000C810B /* RightChatBubble.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		3601992022C1166E007FB50B /* DateUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateUtils.swift; sourceTree = "<group>"; };
 		3601992222C1267C007FB50B /* predefined-tags.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "predefined-tags.json"; sourceTree = "<group>"; };
-		3601992822C22ED5007FB50B /* ObjC-Bridging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ObjC-Bridging.h"; sourceTree = "<group>"; };
 		3612145122A85B7A000536A0 /* RollingView.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RollingView.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3612145422A85B7A000536A0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		3612145622A85B7A000536A0 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
@@ -34,7 +35,9 @@
 		3612146B22A85ED2000536A0 /* Bukowski.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Bukowski.txt; sourceTree = "<group>"; };
 		3612146F22A8644A000536A0 /* RollingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RollingView.swift; sourceTree = "<group>"; };
 		36375B5722AA4AF400DBE33F /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
-		36C884EA22AC8CF40008EEC5 /* TextBubbleFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextBubbleFactory.swift; sourceTree = "<group>"; };
+		368DC4F223423921000C810B /* LeftChatBubble.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = LeftChatBubble.xib; sourceTree = "<group>"; };
+		368DC4F4234239DF000C810B /* ChatBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBubble.swift; sourceTree = "<group>"; };
+		368DC4F6234241D4000C810B /* RightChatBubble.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = RightChatBubble.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,7 +73,9 @@
 				36375B5722AA4AF400DBE33F /* Utilities.swift */,
 				3601992022C1166E007FB50B /* DateUtils.swift */,
 				3612146F22A8644A000536A0 /* RollingView.swift */,
-				36C884EA22AC8CF40008EEC5 /* TextBubbleFactory.swift */,
+				368DC4F4234239DF000C810B /* ChatBubble.swift */,
+				368DC4F223423921000C810B /* LeftChatBubble.xib */,
+				368DC4F6234241D4000C810B /* RightChatBubble.xib */,
 				3612145622A85B7A000536A0 /* MainViewController.swift */,
 				3612145822A85B7A000536A0 /* Main.storyboard */,
 				3612145422A85B7A000536A0 /* AppDelegate.swift */,
@@ -79,7 +84,6 @@
 				3612146322A85B7C000536A0 /* Info.plist */,
 				3612146B22A85ED2000536A0 /* Bukowski.txt */,
 				3601992222C1267C007FB50B /* predefined-tags.json */,
-				3601992822C22ED5007FB50B /* ObjC-Bridging.h */,
 			);
 			path = RollingView;
 			sourceTree = "<group>";
@@ -143,9 +147,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				3601992322C12694007FB50B /* predefined-tags.json in Resources */,
+				368DC4F323423922000C810B /* LeftChatBubble.xib in Resources */,
 				3612146222A85B7C000536A0 /* LaunchScreen.storyboard in Resources */,
 				3612145F22A85B7C000536A0 /* Assets.xcassets in Resources */,
 				3612145A22A85B7A000536A0 /* Main.storyboard in Resources */,
+				368DC4F7234241D4000C810B /* RightChatBubble.xib in Resources */,
 				3612146C22A85ED2000536A0 /* Bukowski.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -161,8 +167,8 @@
 				3612145522A85B7A000536A0 /* AppDelegate.swift in Sources */,
 				36375B5822AA4AF400DBE33F /* Utilities.swift in Sources */,
 				3601992122C1166E007FB50B /* DateUtils.swift in Sources */,
-				36C884EB22AC8CF40008EEC5 /* TextBubbleFactory.swift in Sources */,
 				3612147022A8644A000536A0 /* RollingView.swift in Sources */,
+				368DC4F5234239DF000C810B /* ChatBubble.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,7 +251,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_OBJC_BRIDGING_HEADER = "RollingView/ObjC-Bridging.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -300,7 +306,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_OBJC_BRIDGING_HEADER = "RollingView/ObjC-Bridging.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				VALIDATE_PRODUCT = YES;
 			};

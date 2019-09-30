@@ -17,7 +17,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	@IBOutlet weak var bottomBar: UIView!
 
 
-	private let factories = [LeftBubbleFactory(), RightBubbleFactory()]
+	private let factories = [LeftChatBubble.self, RightChatBubble.self]
 
 	private var lines = try! String(contentsOfFile: Bundle.main.path(forResource: "Bukowski", ofType: "txt")!, encoding: .utf8).components(separatedBy: .newlines).filter { !$0.isEmpty }
 
@@ -50,15 +50,10 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	}
 
 
-	func rollingView(_ rollingView: RollingView, cellLayerForIndex index: Int) -> CALayer {
-		return self.rollingView(rollingView, updateCellLayer: nil, forIndex: index)
-	}
-
-
-	func rollingView(_ rollingView: RollingView, updateCellLayer layer: CALayer?, forIndex index: Int) -> CALayer {
+	func rollingView(_ rollingView: RollingView, cellForIndex index: Int) -> UIView {
 		let factory = factories[Int.random(in: 0...1)]
 		let string = lines[abs(index) % lines.count]
-		return factory.create(width: view.frame.width, string: string)
+		return factory.create(width: rollingView.frame.width, text: string)
 	}
 
 
@@ -82,7 +77,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 	@IBAction func tapAction(_ sender: UITapGestureRecognizer) {
 		let point = sender.location(in: rollingView)
-		print((rollingView.layerFromPoint(point) as? BubbleLayer)?.text ?? "?")
+		print((rollingView.viewFromPoint(point) as? ChatBubble)?.text ?? "?")
 	}
 
 }

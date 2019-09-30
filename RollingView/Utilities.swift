@@ -38,32 +38,7 @@ extension CGRect {
 
 
 
-extension Data {
-
-	func toURLSafeBase64() -> String {
-		return base64EncodedString().replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "+", with: "_").replacingOccurrences(of: "=", with: "")
-	}
-
-	func toSHA256() -> Data {
-		var hash = [UInt8](repeating: 0,  count: Int(CC_SHA256_DIGEST_LENGTH))
-		withUnsafeBytes {
-			_ = CC_SHA256($0.baseAddress, CC_LONG(count), &hash)
-		}
-		return Data(hash)
-	}
-}
-
-
-
 public extension String {
-
-	func toSHA256() -> Data {
-		return (data(using: .utf8) ?? Data()).toSHA256()
-	}
-
-	func toURLSafeHash(max: Int) -> String {
-		return String(toSHA256().toURLSafeBase64().suffix(max))
-	}
 
 	func size(withFont font: UIFont) -> CGSize {
 		return (self as NSString).size(withAttributes: [NSAttributedString.Key.font: font])
@@ -71,32 +46,13 @@ public extension String {
 }
 
 
-public extension UIColor {
+public extension UIView {
 
-	var isDark: Bool {
-		var white: CGFloat = 1
-		var alpha: CGFloat = 1
-		getWhite(&white, alpha: &alpha)
-		return white < 0.8
+	class var reuseId: String {
+		return String(describing: self)
 	}
-}
 
-
-extension FileManager {
-
-	class func cacheDirectory(subDirectory: String, create: Bool) -> String {
-		guard var result = NSSearchPathForDirectoriesInDomains(.cachesDirectory, .userDomainMask, true).first else {
-			preconditionFailure("No cache directory")
-		}
-		result += "/" + subDirectory
-		if create && !`default`.fileExists(atPath: result) {
-			do {
-				try `default`.createDirectory(atPath: result, withIntermediateDirectories: true, attributes: nil)
-			}
-			catch {
-				preconditionFailure("Couldn't create cache directory (\(result))")
-			}
-		}
-		return result
+	class func fromNib() -> Self {
+		return UIViewController(nibName: reuseId, bundle: nil).view as! Self
 	}
 }
