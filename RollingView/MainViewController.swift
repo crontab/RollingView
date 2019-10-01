@@ -65,7 +65,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	}
 
 
-	func rollingView(_ rollingView: RollingView, reuseCell: RollingViewCell, forIndex index: Int) {
+	func rollingView(_ rollingView: RollingView, reuseCell: UIView, forIndex index: Int) {
 		(reuseCell as! ChatBubble).text = "\(index). " + lines[abs(index) % lines.count]
 	}
 
@@ -91,7 +91,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 	@IBAction func tapAction(_ sender: UITapGestureRecognizer) {
 		let point = sender.location(in: rollingView)
-		print((rollingView.viewFromPoint(point) as? ChatBubble)?.text ?? "?")
+		print((rollingView.cellFromPoint(point) as? ChatBubble)?.text ?? "?")
 	}
 
 }

@@ -16,7 +16,7 @@ private let Y_MARGIN: CGFloat = 2
 private let Y_INSET: CGFloat = 9
 
 
-class ChatBubble: RollingViewCell {
+class ChatBubble: UIView {
 
 	@IBOutlet private weak var bubbleView: UIView!
 	@IBOutlet private weak var textLabel: UILabel!
@@ -26,7 +26,7 @@ class ChatBubble: RollingViewCell {
 		set {
 			textLabel.text = newValue
 			layoutIfNeeded()
-			frame.size.height = max(BIG_CORNER, textLabel.frame.bottom + Y_INSET + Y_MARGIN)
+			frame.size.height = max(BIG_CORNER, textLabel.frame.maxY + Y_INSET + Y_MARGIN)
 		}
 	}
 
@@ -38,6 +38,18 @@ class ChatBubble: RollingViewCell {
 	override func awakeFromNib() {
 		super.awakeFromNib()
 		bubbleView.layer.cornerRadius = BIG_CORNER
+	}
+}
+
+
+extension UIView {
+
+	class var reuseId: String {
+		return String(describing: self)
+	}
+
+	class func fromNib() -> Self {
+		return UIViewController(nibName: reuseId, bundle: nil).view as! Self
 	}
 }
 
