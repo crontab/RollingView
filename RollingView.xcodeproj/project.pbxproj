@@ -20,6 +20,7 @@
 		368DC4F323423922000C810B /* LeftChatBubble.xib in Resources */ = {isa = PBXBuildFile; fileRef = 368DC4F223423921000C810B /* LeftChatBubble.xib */; };
 		368DC4F5234239DF000C810B /* ChatBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = 368DC4F4234239DF000C810B /* ChatBubble.swift */; };
 		368DC4F7234241D4000C810B /* RightChatBubble.xib in Resources */ = {isa = PBXBuildFile; fileRef = 368DC4F6234241D4000C810B /* RightChatBubble.xib */; };
+		368DC4F923435C2F000C810B /* RollingViewContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 368DC4F823435C2F000C810B /* RollingViewContent.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +39,7 @@
 		368DC4F223423921000C810B /* LeftChatBubble.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = LeftChatBubble.xib; sourceTree = "<group>"; };
 		368DC4F4234239DF000C810B /* ChatBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBubble.swift; sourceTree = "<group>"; };
 		368DC4F6234241D4000C810B /* RightChatBubble.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = RightChatBubble.xib; sourceTree = "<group>"; };
+		368DC4F823435C2F000C810B /* RollingViewContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RollingViewContent.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -72,6 +74,7 @@
 			children = (
 				36375B5722AA4AF400DBE33F /* Utilities.swift */,
 				3601992022C1166E007FB50B /* DateUtils.swift */,
+				368DC4F823435C2F000C810B /* RollingViewContent.swift */,
 				3612146F22A8644A000536A0 /* RollingView.swift */,
 				368DC4F4234239DF000C810B /* ChatBubble.swift */,
 				368DC4F223423921000C810B /* LeftChatBubble.xib */,
@@ -163,6 +166,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				368DC4F923435C2F000C810B /* RollingViewContent.swift in Sources */,
 				3612145722A85B7A000536A0 /* MainViewController.swift in Sources */,
 				3612145522A85B7A000536A0 /* AppDelegate.swift in Sources */,
 				36375B5822AA4AF400DBE33F /* Utilities.swift in Sources */,

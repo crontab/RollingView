@@ -16,11 +16,6 @@ protocol RollingViewDelegate: class {
 
 
 
-class RollingViewCell: UIView {
-}
-
-
-
 class RollingView: UIScrollView {
 
 	enum Edge: Int {
@@ -40,24 +35,25 @@ class RollingView: UIScrollView {
 		let views = (startIndex..<(startIndex + count)).map { (index) -> RollingViewCell in
 			return rollingViewDelegate?.rollingView(self, cellForIndex: index, reuseView: nil) ?? RollingViewCell()
 		}
-		contentView.addViews(to: edge, startIndex: startIndex, views: views)
+		let totalHeight = contentView.addCells(to: edge, cells: views)
+		contentDidAddSpace(edge: edge, addedHeight: totalHeight)
 	}
 
 
 	func viewFromPoint(_ point: CGPoint) -> RollingViewCell? {
-		return contentView.viewFromPoint(convert(point, to: contentView))
+		return contentView.cellFromPoint(convert(point, to: contentView))
 	}
 
 
 	// Private/protected
 
-	private var contentView: RollingContentView!
+	private var contentView: RollingViewContent!
 	private var firstLayout = true
 
 
 	override func awakeFromNib() {
 		super.awakeFromNib()
-		contentView = RollingContentView(parentWindowWidth: frame.width, backgroundColor: backgroundColor)
+		contentView = RollingViewContent(parentWindowWidth: frame.width)
 		contentView.autoresizingMask = [.flexibleWidth, .flexibleBottomMargin]
 		insertSubview(contentView, at: 0)
 	}
@@ -118,7 +114,6 @@ class RollingView: UIScrollView {
 		didSet {
 			if !firstLayout && !reachedEnd && !loadingMore {
 				let offset = contentOffset.y + contentInset.top + safeAreaInsets.top
-				print("contentOffset.y:", contentOffset.y, "  offset:", offset)
 				if offset < 0 /* frame.height */ {
 					loadingMore = true
 					DispatchQueue.main.async(execute: tryLoadMore)
@@ -165,139 +160,3 @@ class RollingView: UIScrollView {
 	}
 }
 
-
-
-private let CONTENT_HEIGHT: CGFloat = 10_000_000
-private let MASTER_OFFSET = CONTENT_HEIGHT / 2
-private let REFRESH_INDICATOR_TOP_OFFSET: CGFloat = -28
-
-
-private class RollingContentView: UIView {
-
-	fileprivate struct Placeholder {
-		var cachedView: RollingViewCell? // can be discarded to save memory; this provides our caching mechanism essentially (not yet)
-		var top: CGFloat
-		var height: CGFloat
-
-		var bottom: CGFloat {
-			return top + height
-		}
-
-		init(view: RollingViewCell) {
-			self.cachedView = view
-			self.top = view.frame.top
-			self.height = view.frame.height
-		}
-	}
-
-
-	fileprivate var refreshIndicator: UIActivityIndicatorView!
-
-	private var bgColor: UIColor?
-
-	private var orderedCells: [Placeholder] = []	// ordered by the `y` coordinate
-
-	private var startIndex = 0
-	private var endIndex = 0
-
-
-	private var contentTop: CGFloat {
-		return orderedCells.first?.top ?? MASTER_OFFSET
-	}
-
-
-	private var contentBottom: CGFloat {
-		return orderedCells.last?.bottom ?? MASTER_OFFSET
-	}
-
-
-	convenience init(parentWindowWidth: CGFloat, backgroundColor: UIColor?) {
-		self.init()
-		frame = CGRect(x: 0, y: -MASTER_OFFSET, width: parentWindowWidth, height: CONTENT_HEIGHT)
-		bgColor = backgroundColor
-
-		let indicatorSide: CGFloat = 20
-		refreshIndicator = UIActivityIndicatorView(frame: CGRect(x: (parentWindowWidth - indicatorSide) / 2, y: contentTop + REFRESH_INDICATOR_TOP_OFFSET, width: indicatorSide, height: indicatorSide))
-		refreshIndicator.autoresizingMask = [.flexibleLeftMargin, .flexibleRightMargin]
-		refreshIndicator.style = .gray
-		addSubview(refreshIndicator)
-	}
-
-
-	private var hostView: RollingView {
-		return superview as! RollingView
-	}
-
-
-	fileprivate func startIndexForEdge(_ edge: RollingView.Edge, newViewCount count: Int) -> Int {
-		switch edge {
-		case .top:
-			return startIndex - count
-		case .bottom:
-			return endIndex
-		}
-	}
-
-
-	fileprivate func addViews(to edge: RollingView.Edge, startIndex: Int, views: [RollingViewCell]) {
-		var totalHeight: CGFloat = 0
-
-		switch edge {
-
-		case .top:
-			precondition(startIndex + views.count == self.startIndex)
-			self.startIndex = startIndex
-			var newViews: [Placeholder] = []
-			var top: CGFloat = contentTop
-			for view in views.reversed() {
-				let viewHeight = view.frame.height
-				top -= viewHeight
-				totalHeight += viewHeight
-				view.frame.top = top
-				newViews.append(Placeholder(view: view))
-				self.addSubview(view)
-			}
-			orderedCells.insert(contentsOf: newViews.reversed(), at: 0)
-
-		case .bottom:
-			precondition(startIndex == endIndex)
-			self.endIndex += views.count
-			for view in views {
-				let viewHeight = view.frame.height
-				totalHeight += viewHeight
-				view.frame.top = contentBottom
-				orderedCells.append(Placeholder(view: view))
-				self.addSubview(view)
-			}
-		}
-
-		refreshIndicator.frame.top = contentTop + REFRESH_INDICATOR_TOP_OFFSET
-		hostView.contentDidAddSpace(edge: edge, addedHeight: totalHeight)
-	}
-
-
-	fileprivate func viewFromPoint(_ point: CGPoint) -> RollingViewCell? {
-		let index = orderedCells.binarySearch(top: point.y) - 1
-		if index >= 0 && index < orderedCells.count, let view = orderedCells[index].cachedView, view.frame.contains(point) {
-			return view
-		}
-		return nil
-	}
-}
-
-
-private extension Array where Element == RollingContentView.Placeholder {
-	func binarySearch(top: CGFloat) -> Index {
-		var low = 0
-		var high = count
-		while low != high {
-			let mid = (low + high) / 2
-			if self[mid].top < top {
-				low = mid + 1
-			} else {
-				high = mid
-			}
-		}
-		return low
-	}
-}

@@ -52,10 +52,7 @@ class ChatBubble: RollingViewCell {
 		textLabel.preferredMaxLayoutWidth = textLabel.frame.width
 		textLabel.sizeToFit()
 		let labelHeightDelta = textLabel.frame.height - labelOldHeight
-		if labelHeightDelta != 0 {
-			frame.size.height = max(BIG_CORNER, frame.size.height + labelHeightDelta)
-			setNeedsDisplay()
-		}
+		frame.size.height = max(BIG_CORNER, frame.size.height + labelHeightDelta)
 	}
 }
 
