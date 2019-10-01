@@ -27,6 +27,7 @@ class RollingViewContent: UIView {
 
 	fileprivate struct Placeholder {
 		var cell: RollingViewCell? // can be discarded to save memory; this provides our caching mechanism essentially (not yet)
+		var cellClass: RollingViewCell.Type
 		var top: CGFloat
 		var height: CGFloat
 
@@ -34,13 +35,15 @@ class RollingViewContent: UIView {
 			return top + height
 		}
 
-		init(top: CGFloat, height: CGFloat) {
+		init(cellClass: RollingViewCell.Type, top: CGFloat, height: CGFloat) {
+			self.cellClass = cellClass
 			self.top = top
 			self.height = height
 		}
 
 		init(cell: RollingViewCell) {
 			self.cell = cell
+			self.cellClass = type(of: cell)
 			self.top = cell.frame.top
 			self.height = cell.frame.height
 		}
@@ -64,7 +67,7 @@ class RollingViewContent: UIView {
 
 	internal var refreshIndicator: UIActivityIndicatorView!
 
-	private var orderedCells: [Placeholder] = []	// ordered by the `y` coordinate
+	private var placeholders: [Placeholder] = []	// ordered by the `y` coordinate
 
 	// Always negative or 0; from the user's perspective the cells added to the top have negative indices
 	private var userStartIndex = 0
@@ -75,12 +78,12 @@ class RollingViewContent: UIView {
 
 
 	private var contentTop: CGFloat {
-		return orderedCells.first?.top ?? MASTER_OFFSET
+		return placeholders.first?.top ?? MASTER_OFFSET
 	}
 
 
 	private var contentBottom: CGFloat {
-		return orderedCells.last?.bottom ?? MASTER_OFFSET
+		return placeholders.last?.bottom ?? MASTER_OFFSET
 	}
 
 
@@ -101,7 +104,7 @@ class RollingViewContent: UIView {
 		case .top:
 			return userStartIndex - count
 		case .bottom:
-			return userStartIndex + orderedCells.count
+			return userStartIndex + placeholders.count
 		}
 	}
 
@@ -124,7 +127,7 @@ class RollingViewContent: UIView {
 
 				// If the hot window is not at the top, then add a placeholder and send the poor cell to the recycling pool
 				if topHotIndex > 0 {
-					newCells.append(Placeholder(top: top, height: cellHeight))
+					newCells.append(Placeholder(cellClass: type(of: cell), top: top, height: cellHeight))
 					recyclePool.enqueue(cell)
 				}
 				else {
@@ -132,7 +135,7 @@ class RollingViewContent: UIView {
 					self.addSubview(cell)
 				}
 			}
-			orderedCells.insert(contentsOf: newCells.reversed(), at: 0)
+			placeholders.insert(contentsOf: newCells.reversed(), at: 0)
 
 		case .bottom:
 			for cell in cells {
@@ -141,12 +144,12 @@ class RollingViewContent: UIView {
 				cell.frame.top = contentBottom
 
 				// If this is beyond our hot area, then add a placeholder and send the poor cell to the recycling pool
-				if bottomHotIndex < orderedCells.count - 1 {
-					orderedCells.append(Placeholder(top: contentBottom, height: cellHeight))
+				if bottomHotIndex < placeholders.count - 1 {
+					placeholders.append(Placeholder(cellClass: type(of: cell), top: contentBottom, height: cellHeight))
 					recyclePool.enqueue(cell)
 				}
 				else {
-					orderedCells.append(Placeholder(cell: cell))
+					placeholders.append(Placeholder(cell: cell))
 					self.addSubview(cell)
 				}
 			}
@@ -159,7 +162,7 @@ class RollingViewContent: UIView {
 
 	internal func validateVisibleRect(toRect rect: CGRect, recyclePool: RollingViewPool, warmCellCount: Int) {
 
-		guard !orderedCells.isEmpty else {
+		guard !placeholders.isEmpty else {
 			return
 		}
 
@@ -168,29 +171,28 @@ class RollingViewContent: UIView {
 		// 2 screens of cells should be kept "hot" in memory, i.e. half-screen above and half-screen below the visible rect objects should be available
 		let hotRect = rect.insetBy(dx: 0, dy: -rect.height / 2)
 
-		topHotIndex = max(0, orderedCells.binarySearch(top: hotRect.top) - 1)
+		topHotIndex = max(0, placeholders.binarySearch(top: hotRect.top) - 1)
 		var index = topHotIndex
 		repeat {
-			if orderedCells[index].cell == nil {
-				RLOG("RollingView: loading cell at \(index + userStartIndex), recyclePool: \(recyclePool.count)")
-				orderedCells[index].attach(cell: recyclePool.dequeue(forIndex: index + userStartIndex), toSuperview: self)
+			if placeholders[index].cell == nil {
+				let cell = recyclePool.dequeue(forIndex: index + userStartIndex, cellClass: placeholders[index].cellClass, width: frame.width)
+				placeholders[index].attach(cell: cell, toSuperview: self)
 			}
 			index += 1
-		} while index < orderedCells.count && orderedCells[index].bottom < hotRect.bottom
+		} while index < placeholders.count && placeholders[index].bottom < hotRect.bottom
 		bottomHotIndex = index - 1
 
 		// Expand the hot area by warmCellCount more cells in both directions; everything beyond that can be freed:
 		index = topHotIndex - warmCellCount
-		while index >= 0 && orderedCells[index].cell != nil {
-			let detachedCell = orderedCells[index].detach()
+		while index >= 0 && placeholders[index].cell != nil {
+			let detachedCell = placeholders[index].detach()
 			recyclePool.enqueue(detachedCell)
-			RLOG("RollingView: discarding at \(index + userStartIndex), recyclePool: \(recyclePool.count)")
 			index -= 1
 		}
 
 		index = bottomHotIndex + warmCellCount
-		while index < orderedCells.count && orderedCells[index].cell != nil {
-			let detachedCell = orderedCells[index].detach()
+		while index < placeholders.count && placeholders[index].cell != nil {
+			let detachedCell = placeholders[index].detach()
 			recyclePool.enqueue(detachedCell)
 			RLOG("RollingView: discarding at \(index + userStartIndex), recyclePool: \(recyclePool.count)")
 			index += 1
@@ -199,8 +201,8 @@ class RollingViewContent: UIView {
 
 
 	internal func cellFromPoint(_ point: CGPoint) -> RollingViewCell? {
-		let index = orderedCells.binarySearch(top: point.y) - 1
-		if index >= 0 && index < orderedCells.count, let cell = orderedCells[index].cell, cell.frame.contains(point) {
+		let index = placeholders.binarySearch(top: point.y) - 1
+		if index >= 0 && index < placeholders.count, let cell = placeholders[index].cell, cell.frame.contains(point) {
 			return cell
 		}
 		return nil

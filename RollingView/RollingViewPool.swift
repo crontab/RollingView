@@ -13,26 +13,59 @@ typealias RollingViewCell = UIView
 
 
 internal protocol RollingViewPoolProtocol: class {
-	func cellForIndex(index: Int, reuseCell: RollingViewCell?) -> RollingViewCell
+	func cellForIndex(index: Int, reuseCell: RollingViewCell)
 }
 
 
 internal class RollingViewPool {
 
+	internal func register(cellClass: RollingViewCell.Type, create: @escaping () -> RollingViewCell) {
+		let key = ObjectIdentifier(cellClass)
+		precondition(dict[key] == nil, "RollingViewCell class already registered")
+		dict[key] = Pool(create: create)
+	}
+
+
 	internal func enqueue(_ element: RollingViewCell) {
-		array.append(element)
+		let key = ObjectIdentifier(type(of: element))
+		precondition(dict[key] != nil, "RollingViewCell class not registered")
+		RLOG("RollingView: recycling cell, recyclePool: \(count)")
+		dict[key]!.array.append(element)
 	}
 
-	internal func dequeue(forIndex index: Int) -> RollingViewCell {
-		let reuseCell = !array.isEmpty ? array.removeLast() : nil
-		let newCell = delegate!.cellForIndex(index: index, reuseCell: reuseCell)
-		precondition(reuseCell == nil || newCell == reuseCell!) // ensure the provided cell is reused if available
-		return newCell
+
+	internal func dequeue(forIndex index: Int, cellClass: RollingViewCell.Type, width: CGFloat) -> RollingViewCell {
+		let key = ObjectIdentifier(cellClass)
+		precondition(dict[key] != nil, "RollingViewCell class not registered")
+		var reuseCell: RollingViewCell
+		if !dict[key]!.array.isEmpty {
+			RLOG("RollingView: reusing cell at \(index), recyclePool: \(count)")
+			reuseCell = dict[key]!.array.removeLast()
+		}
+		else {
+			reuseCell = dict[key]!.create()
+			RLOG("RellingView: ALLOC")
+		}
+		reuseCell.frame.size.width = width
+		delegate!.cellForIndex(index: index, reuseCell: reuseCell)
+		return reuseCell
 	}
 
-	internal var count: Int { array.count } // for debug printing only
+
+	internal var count: Int { dict.values.reduce(0) { $0 + $1.array.count } } // for debug printing only
 
 	internal weak var delegate: RollingViewPoolProtocol?
 
-	private var array: [RollingViewCell] = []
+
+	private struct Pool {
+		var array: [RollingViewCell] = []
+		var create: () -> RollingViewCell
+
+		init (create: @escaping () -> RollingViewCell) {
+			self.create = create
+		}
+	}
+
+
+	private var dict: [ObjectIdentifier: Pool] = [:]
 }

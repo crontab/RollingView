@@ -10,7 +10,7 @@ import UIKit
 
 
 protocol RollingViewDelegate: class {
-	func rollingView(_ rollingView: RollingView, cellForIndex index: Int, reuseCell: RollingViewCell?) -> RollingViewCell
+	func rollingView(_ rollingView: RollingView, cellForIndex index: Int, reuseCell: RollingViewCell)
 	func rollingViewCanAddCellsAbove(_ rollingView: RollingView, completion: @escaping (_ tryAgain: Bool) -> Void)
 }
 
@@ -28,14 +28,19 @@ class RollingView: UIScrollView, RollingViewPoolProtocol {
 	var warmCellCount: Int = 5
 
 
-	func addCells(_ edge: Edge, count: Int) {
+	func register(cellClass: RollingViewCell.Type, create: @escaping () -> RollingViewCell) {
+		recyclePool.register(cellClass: cellClass, create: create)
+	}
+
+
+	func addCells(_ edge: Edge, cellClass: RollingViewCell.Type, count: Int) {
 		guard count > 0 else {
 			loadingMore = false
 			return
 		}
 		let startIndex = contentView.startIndexForEdge(edge, newViewCount: count)
 		let views = (startIndex..<(startIndex + count)).map { (index) -> RollingViewCell in
-			return self.recyclePool.dequeue(forIndex: index)
+			return self.recyclePool.dequeue(forIndex: index, cellClass: cellClass, width: contentView.frame.width)
 		}
 		let totalHeight = contentView.addCells(to: edge, cells: views, recyclePool: recyclePool)
 		validateVisibleRect()
@@ -131,19 +136,8 @@ class RollingView: UIScrollView, RollingViewPoolProtocol {
 	}
 
 
-	#if DEBUG_ROLLING_VIEW
-	var allocations: Int = 0
-	#endif
-
-	internal func cellForIndex(index: Int, reuseCell: RollingViewCell?) -> RollingViewCell {
-		#if DEBUG_ROLLING_VIEW
-		if reuseCell == nil {
-			allocations += 1
-			RLOG("RollingView: ALLOC \(allocations)")
-		}
-		#endif
-		let newCell = rollingViewDelegate!.rollingView(self, cellForIndex: index, reuseCell: reuseCell)
-		return newCell
+	internal func cellForIndex(index: Int, reuseCell: RollingViewCell) {
+		rollingViewDelegate!.rollingView(self, cellForIndex: index, reuseCell: reuseCell)
 	}
 
 

@@ -30,16 +30,13 @@ class ChatBubble: RollingViewCell {
 		}
 	}
 
-	class func create(width: CGFloat) -> Self {
-		let bubble = fromNib()
-		bubble.frame.size.width = width
-		return bubble
+	class func create() -> Self {
+		return fromNib()
 	}
 
 
 	override func awakeFromNib() {
 		super.awakeFromNib()
-		// translatesAutoresizingMaskIntoConstraints = false
 		bubbleView.layer.cornerRadius = BIG_CORNER
 	}
 }
