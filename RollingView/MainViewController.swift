@@ -50,18 +50,20 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	}
 
 
-	func rollingView(_ rollingView: RollingView, cellForIndex index: Int, reuseView: RollingViewCell?) -> RollingViewCell {
+	func rollingView(_ rollingView: RollingView, cellForIndex index: Int, reuseCell: RollingViewCell?) -> RollingViewCell {
 		let factory = factories[Int.random(in: 0...1)]
-		let string = lines[abs(index) % lines.count]
-		return factory.create(width: rollingView.frame.width, text: string)
+		let cell = (reuseCell ?? factory.create(width: rollingView.frame.width)) as! ChatBubble
+		cell.text = "\(index). " + lines[abs(index) % lines.count]
+		return cell
 	}
 
 
 	func rollingViewCanAddCellsAbove(_ rollingView: RollingView, completion: @escaping (Bool) -> Void) {
-		DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-			rollingView.addCells(.top, count: 2)
-			completion(true)
-		}
+//		DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+//			rollingView.addCells(.top, count: 2)
+//			completion(true)
+//		}
+		completion(false)
 	}
 
 

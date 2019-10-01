@@ -10,7 +10,7 @@ import UIKit
 
 
 protocol RollingViewDelegate: class {
-	func rollingView(_ rollingView: RollingView, cellForIndex index: Int, reuseView: RollingViewCell?) -> RollingViewCell
+	func rollingView(_ rollingView: RollingView, cellForIndex index: Int, reuseCell: RollingViewCell?) -> RollingViewCell
 	func rollingViewCanAddCellsAbove(_ rollingView: RollingView, completion: @escaping (_ tryAgain: Bool) -> Void)
 }
 
@@ -25,6 +25,8 @@ class RollingView: UIScrollView {
 
 	weak var rollingViewDelegate: RollingViewDelegate?
 
+	var warmCellCount: Int = 5
+
 
 	func addCells(_ edge: Edge, count: Int) {
 		guard count > 0 else {
@@ -33,9 +35,10 @@ class RollingView: UIScrollView {
 		}
 		let startIndex = contentView.startIndexForEdge(edge, newViewCount: count)
 		let views = (startIndex..<(startIndex + count)).map { (index) -> RollingViewCell in
-			return rollingViewDelegate?.rollingView(self, cellForIndex: index, reuseView: nil) ?? RollingViewCell()
+			return self.cellForIndex(index: index)
 		}
 		let totalHeight = contentView.addCells(to: edge, cells: views)
+		validateVisibleRect()
 		contentDidAddSpace(edge: edge, addedHeight: totalHeight)
 	}
 
@@ -112,13 +115,37 @@ class RollingView: UIScrollView {
 
 	override var contentOffset: CGPoint {
 		didSet {
+			validateVisibleRect()
 			if !firstLayout && !reachedEnd && !loadingMore {
 				let offset = contentOffset.y + contentInset.top + safeAreaInsets.top
-				if offset < 0 /* frame.height */ {
+				if offset < frame.height { // try to load a screenfull more cells above the existing content
 					loadingMore = true
 					DispatchQueue.main.async(execute: tryLoadMore)
 				}
 			}
+		}
+	}
+
+
+	#if DEBUG_ROLLING_VIEW
+	var allocations: Int = 0
+	#endif
+
+	private func cellForIndex(index: Int) -> RollingViewCell {
+		let reuseCell = contentView.dequeueReusableCell()
+		if reuseCell == nil {
+			allocations += 1
+			RLOG("RollingView: ALLOC \(allocations)")
+		}
+		let newCell = rollingViewDelegate!.rollingView(self, cellForIndex: index, reuseCell: reuseCell)
+		precondition(reuseCell == nil || newCell == reuseCell!) // ensure the provided cell is reused if available
+		return newCell
+	}
+
+
+	private func validateVisibleRect() {
+		if let contentView = contentView, rollingViewDelegate != nil {
+			contentView.validateVisibleRect(toRect: convert(bounds, to: contentView), cellForIndex: cellForIndex, warmCellCount: warmCellCount)
 		}
 	}
 

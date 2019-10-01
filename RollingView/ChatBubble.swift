@@ -12,10 +12,9 @@ import UIKit
 private let BIG_CORNER: CGFloat = 20
 private let SMALL_CORNER: CGFloat = 6
 
-private let BIG_X_MARGIN: CGFloat = 100
+private let BIG_X_MARGIN: CGFloat = 90
 private let SMALL_X_MARGIN: CGFloat = 10
-private let STANDARD_MARGINS = UIEdgeInsets(top: 2, left: SMALL_X_MARGIN, bottom: 2, right: SMALL_X_MARGIN)
-private let STANDARD_TEXT_INSETS = UIEdgeInsets(top: 9, left: 15, bottom: 9, right: 15)
+private let X_INSET: CGFloat = 15
 
 
 class ChatBubble: RollingViewCell {
@@ -31,11 +30,9 @@ class ChatBubble: RollingViewCell {
 		}
 	}
 
-
-	class func create(width: CGFloat, text: String) -> Self {
+	class func create(width: CGFloat) -> Self {
 		let bubble = fromNib()
 		bubble.frame.size.width = width
-		bubble.text = text
 		return bubble
 	}
 
@@ -48,6 +45,11 @@ class ChatBubble: RollingViewCell {
 
 
 	private func resizeIfNeeded() {
+		// Restore original widths and positions
+		bubbleView.frame.size.width = frame.width - SMALL_X_MARGIN * 2 - BIG_X_MARGIN
+		textLabel.frame.size.width = bubbleView.frame.width - X_INSET * 2
+
+		// Now calculate the new height
 		let labelOldHeight = textLabel.frame.height
 		textLabel.preferredMaxLayoutWidth = textLabel.frame.width
 		textLabel.sizeToFit()

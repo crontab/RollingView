@@ -9,6 +9,20 @@
 import UIKit
 
 
+@inlinable
+internal func debugOnly(_ body: () -> Void) {
+	assert({ body(); return true }())
+}
+
+
+@inlinable
+internal func DLOG(_ s: String) {
+	debugOnly {
+		print(s)
+	}
+}
+
+
 extension CGRect {
 
 	@inlinable
