@@ -34,7 +34,6 @@ class ChatBubble: UIView {
 		return fromNib()
 	}
 
-
 	override func awakeFromNib() {
 		super.awakeFromNib()
 		bubbleView.layer.cornerRadius = BIG_CORNER

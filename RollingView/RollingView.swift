@@ -69,7 +69,7 @@ class RollingView: UIScrollView {
 
 	override func awakeFromNib() {
 		super.awakeFromNib()
-		contentView = createContentView(parentWindowWidth: frame.width)
+		contentView = createContentView(parentWindowWidth: frame.width, backgroundColor: backgroundColor)
 		contentView.autoresizingMask = [.flexibleWidth, .flexibleBottomMargin]
 		insertSubview(contentView, at: 0)
 	}
@@ -193,8 +193,13 @@ class RollingView: UIScrollView {
 
 	private var refreshIndicator: UIActivityIndicatorView!
 
-	private func createContentView(parentWindowWidth: CGFloat) -> UIView {
+	override var backgroundColor: UIColor? {
+		didSet { contentView?.backgroundColor = backgroundColor }
+	}
+
+	private func createContentView(parentWindowWidth: CGFloat, backgroundColor: UIColor?) -> UIView {
 		let view = UIView(frame: CGRect(x: 0, y: -Self.MASTER_OFFSET, width: parentWindowWidth, height: Self.CONTENT_HEIGHT))
+		view.backgroundColor = backgroundColor
 		let indicatorSide: CGFloat = 20
 		refreshIndicator = UIActivityIndicatorView(frame: CGRect(x: (parentWindowWidth - indicatorSide) / 2, y: Self.MASTER_OFFSET + Self.REFRESH_INDICATOR_TOP_OFFSET, width: indicatorSide, height: indicatorSide))
 		refreshIndicator.autoresizingMask = [.flexibleLeftMargin, .flexibleRightMargin]
