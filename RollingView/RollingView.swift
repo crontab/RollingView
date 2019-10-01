@@ -10,7 +10,7 @@ import UIKit
 
 
 protocol RollingViewDelegate: class {
-	func rollingView(_ rollingView: RollingView, cellForIndex index: Int, reuseCell: RollingViewCell)
+	func rollingView(_ rollingView: RollingView, reuseCell: RollingViewCell, forIndex index: Int)
 	func rollingViewCanAddCellsAbove(_ rollingView: RollingView, completion: @escaping (_ tryAgain: Bool) -> Void)
 }
 
@@ -136,8 +136,8 @@ class RollingView: UIScrollView, RollingViewPoolProtocol {
 	}
 
 
-	internal func cellForIndex(index: Int, reuseCell: RollingViewCell) {
-		rollingViewDelegate!.rollingView(self, cellForIndex: index, reuseCell: reuseCell)
+	internal func reuseCell(_ reuseCell: RollingViewCell, forIndex index: Int) {
+		rollingViewDelegate!.rollingView(self, reuseCell: reuseCell, forIndex: index)
 	}
 
 

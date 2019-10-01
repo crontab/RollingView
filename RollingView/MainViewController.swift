@@ -65,7 +65,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	}
 
 
-	func rollingView(_ rollingView: RollingView, cellForIndex index: Int, reuseCell: RollingViewCell) {
+	func rollingView(_ rollingView: RollingView, reuseCell: RollingViewCell, forIndex index: Int) {
 		(reuseCell as! ChatBubble).text = "\(index). " + lines[abs(index) % lines.count]
 	}
 

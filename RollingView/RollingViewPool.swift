@@ -13,7 +13,7 @@ typealias RollingViewCell = UIView
 
 
 internal protocol RollingViewPoolProtocol: class {
-	func cellForIndex(index: Int, reuseCell: RollingViewCell)
+	func reuseCell(_ reuseCell: RollingViewCell, forIndex index: Int)
 }
 
 
@@ -47,7 +47,7 @@ internal class RollingViewPool {
 			RLOG("RellingView: ALLOC")
 		}
 		reuseCell.frame.size.width = width
-		delegate!.cellForIndex(index: index, reuseCell: reuseCell)
+		delegate!.reuseCell(reuseCell, forIndex: index)
 		return reuseCell
 	}
 
