@@ -16,7 +16,7 @@ protocol RollingViewDelegate: class {
 
 
 
-class RollingView: UIScrollView {
+class RollingView: UIScrollView, RollingViewPoolProtocol {
 
 	enum Edge: Int {
 		case top
@@ -35,9 +35,9 @@ class RollingView: UIScrollView {
 		}
 		let startIndex = contentView.startIndexForEdge(edge, newViewCount: count)
 		let views = (startIndex..<(startIndex + count)).map { (index) -> RollingViewCell in
-			return self.cellForIndex(index: index)
+			return self.recyclePool.dequeue(forIndex: index)
 		}
-		let totalHeight = contentView.addCells(to: edge, cells: views)
+		let totalHeight = contentView.addCells(to: edge, cells: views, recyclePool: recyclePool)
 		validateVisibleRect()
 		contentDidAddSpace(edge: edge, addedHeight: totalHeight)
 	}
@@ -51,11 +51,15 @@ class RollingView: UIScrollView {
 	// Private/protected
 
 	private var contentView: RollingViewContent!
+	private var recyclePool = RollingViewPool()
 	private var firstLayout = true
 
 
 	override func awakeFromNib() {
 		super.awakeFromNib()
+
+		recyclePool.delegate = self
+
 		contentView = RollingViewContent(parentWindowWidth: frame.width)
 		contentView.autoresizingMask = [.flexibleWidth, .flexibleBottomMargin]
 		insertSubview(contentView, at: 0)
@@ -131,21 +135,21 @@ class RollingView: UIScrollView {
 	var allocations: Int = 0
 	#endif
 
-	private func cellForIndex(index: Int) -> RollingViewCell {
-		let reuseCell = contentView.dequeueReusableCell()
+	internal func cellForIndex(index: Int, reuseCell: RollingViewCell?) -> RollingViewCell {
+		#if DEBUG_ROLLING_VIEW
 		if reuseCell == nil {
 			allocations += 1
 			RLOG("RollingView: ALLOC \(allocations)")
 		}
+		#endif
 		let newCell = rollingViewDelegate!.rollingView(self, cellForIndex: index, reuseCell: reuseCell)
-		precondition(reuseCell == nil || newCell == reuseCell!) // ensure the provided cell is reused if available
 		return newCell
 	}
 
 
 	private func validateVisibleRect() {
 		if let contentView = contentView, rollingViewDelegate != nil {
-			contentView.validateVisibleRect(toRect: convert(bounds, to: contentView), cellForIndex: cellForIndex, warmCellCount: warmCellCount)
+			contentView.validateVisibleRect(toRect: convert(bounds, to: contentView), recyclePool: recyclePool, warmCellCount: warmCellCount)
 		}
 	}
 
