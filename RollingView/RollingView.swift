@@ -15,21 +15,8 @@ protocol RollingViewDelegate: class {
 }
 
 
-fileprivate protocol RollingViewPoolProtocol: class {
-	func reuseCell(_ reuseCell: UIView, forIndex index: Int)
-}
 
-
-
-#if DEBUG && DEBUG_ROLLING_VIEW
-	private func RLOG(_ s: String) { print(s) }
-#else
-	private func RLOG(_ s: String) { }
-#endif
-
-
-
-class RollingView: UIScrollView, RollingViewPoolProtocol {
+class RollingView: UIScrollView {
 
 	// MARK: - Public
 
@@ -55,7 +42,7 @@ class RollingView: UIScrollView, RollingViewPoolProtocol {
 		}
 		let startIndex = startIndexForEdge(edge, newViewCount: count)
 		let views = (startIndex..<(startIndex + count)).map { (index) -> UIView in
-			return self.recyclePool.dequeue(forIndex: index, cellClass: cellClass, width: contentView.frame.width)
+			return self.recyclePool.dequeue(forIndex: index, cellClass: cellClass, width: contentView.frame.width, reuseCell: reuseCell)
 		}
 		let totalHeight = addCells(to: edge, cells: views)
 		validateVisibleRect()
@@ -82,9 +69,6 @@ class RollingView: UIScrollView, RollingViewPoolProtocol {
 
 	override func awakeFromNib() {
 		super.awakeFromNib()
-
-		recyclePool.delegate = self
-
 		contentView = createContentView(parentWindowWidth: frame.width)
 		contentView.autoresizingMask = [.flexibleWidth, .flexibleBottomMargin]
 		insertSubview(contentView, at: 0)
@@ -156,8 +140,9 @@ class RollingView: UIScrollView, RollingViewPoolProtocol {
 	}
 
 
-	fileprivate func reuseCell(_ reuseCell: UIView, forIndex index: Int) {
+	private func reuseCell(_ reuseCell: UIView, forIndex index: Int) -> UIView {
 		rollingViewDelegate!.rollingView(self, reuseCell: reuseCell, forIndex: index)
+		return reuseCell
 	}
 
 
@@ -356,7 +341,7 @@ class RollingView: UIScrollView, RollingViewPoolProtocol {
 		var index = topHotIndex
 		repeat {
 			if placeholders[index].cell == nil {
-				let cell = recyclePool.dequeue(forIndex: index + userStartIndex, cellClass: placeholders[index].cellClass, width: contentView.frame.width)
+				let cell = recyclePool.dequeue(forIndex: index + userStartIndex, cellClass: placeholders[index].cellClass, width: contentView.frame.width, reuseCell: reuseCell)
 				placeholders[index].attach(cell: cell, toSuperview: contentView)
 			}
 			index += 1
@@ -385,8 +370,6 @@ class RollingView: UIScrollView, RollingViewPoolProtocol {
 
 	private class CommonPool {
 
-		weak var delegate: RollingViewPoolProtocol?
-
 		func register(cellClass: UIView.Type, create: @escaping () -> UIView) {
 			let key = ObjectIdentifier(cellClass)
 			precondition(dict[key] == nil, "RollingView cell class \(cellClass) already registered")
@@ -399,13 +382,12 @@ class RollingView: UIScrollView, RollingViewPoolProtocol {
 			dict[key]!.enqueue(element)
 		}
 
-		func dequeue(forIndex index: Int, cellClass: UIView.Type, width: CGFloat) -> UIView {
+		func dequeue(forIndex index: Int, cellClass: UIView.Type, width: CGFloat, reuseCell: (UIView, Int) -> UIView) -> UIView {
 			let key = ObjectIdentifier(cellClass)
 			precondition(dict[key] != nil, "RollingView cell class \(cellClass) not registered")
-			let reuseCell = dict[key]!.dequeueOrCreate()
-			reuseCell.frame.size.width = width
-			delegate!.reuseCell(reuseCell, forIndex: index)
-			return reuseCell
+			let cell = dict[key]!.dequeueOrCreate()
+			cell.frame.size.width = width
+			return reuseCell(cell, index)
 		}
 
 		private struct Pool {
@@ -450,3 +432,11 @@ private extension Array where Element == RollingView.Placeholder {
 		return low
 	}
 }
+
+
+#if DEBUG && DEBUG_ROLLING_VIEW
+	private func RLOG(_ s: String) { print(s) }
+#else
+	private func RLOG(_ s: String) { }
+#endif
+
