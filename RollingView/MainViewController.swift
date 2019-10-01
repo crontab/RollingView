@@ -51,7 +51,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 
 	func rollingView(_ rollingView: RollingView, cellForIndex index: Int, reuseCell: RollingViewCell?) -> RollingViewCell {
-		let factory = factories[Int.random(in: 0...1)]
+		let factory = factories[abs(index) % 3 == 0 ? 0 : 1]
 		let cell = (reuseCell ?? factory.create(width: rollingView.frame.width)) as! ChatBubble
 		cell.text = "\(index). " + lines[abs(index) % lines.count]
 		return cell

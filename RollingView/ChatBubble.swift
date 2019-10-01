@@ -12,9 +12,8 @@ import UIKit
 private let BIG_CORNER: CGFloat = 20
 private let SMALL_CORNER: CGFloat = 6
 
-private let BIG_X_MARGIN: CGFloat = 90
-private let SMALL_X_MARGIN: CGFloat = 10
-private let X_INSET: CGFloat = 15
+private let Y_MARGIN: CGFloat = 2
+private let Y_INSET: CGFloat = 9
 
 
 class ChatBubble: RollingViewCell {
@@ -26,7 +25,8 @@ class ChatBubble: RollingViewCell {
 		get { return textLabel.text ?? "" }
 		set {
 			textLabel.text = newValue
-			resizeIfNeeded()
+			layoutIfNeeded()
+			frame.size.height = max(BIG_CORNER, textLabel.frame.bottom + Y_INSET + Y_MARGIN)
 		}
 	}
 
@@ -39,22 +39,8 @@ class ChatBubble: RollingViewCell {
 
 	override func awakeFromNib() {
 		super.awakeFromNib()
-		translatesAutoresizingMaskIntoConstraints = false
+		// translatesAutoresizingMaskIntoConstraints = false
 		bubbleView.layer.cornerRadius = BIG_CORNER
-	}
-
-
-	private func resizeIfNeeded() {
-		// Restore original widths and positions
-		bubbleView.frame.size.width = frame.width - SMALL_X_MARGIN * 2 - BIG_X_MARGIN
-		textLabel.frame.size.width = bubbleView.frame.width - X_INSET * 2
-
-		// Now calculate the new height
-		let labelOldHeight = textLabel.frame.height
-		textLabel.preferredMaxLayoutWidth = textLabel.frame.width
-		textLabel.sizeToFit()
-		let labelHeightDelta = textLabel.frame.height - labelOldHeight
-		frame.size.height = max(BIG_CORNER, frame.size.height + labelHeightDelta)
 	}
 }
 
