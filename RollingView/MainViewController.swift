@@ -50,7 +50,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	}
 
 
-	func rollingView(_ rollingView: RollingView, cellForIndex index: Int) -> UIView {
+	func rollingView(_ rollingView: RollingView, cellForIndex index: Int, reuseView: RollingViewCell?) -> RollingViewCell {
 		let factory = factories[Int.random(in: 0...1)]
 		let string = lines[abs(index) % lines.count]
 		return factory.create(width: rollingView.frame.width, text: string)
@@ -58,10 +58,10 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 
 	func rollingViewCanAddCellsAbove(_ rollingView: RollingView, completion: @escaping (Bool) -> Void) {
-//		DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-//			rollingView.addCells(.top, count: 20)
-//		}
-		completion(false)
+		DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+			rollingView.addCells(.top, count: 2)
+			completion(true)
+		}
 	}
 
 

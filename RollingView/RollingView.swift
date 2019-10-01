@@ -10,8 +10,13 @@ import UIKit
 
 
 protocol RollingViewDelegate: class {
-	func rollingView(_ rollingView: RollingView, cellForIndex index: Int) -> UIView
+	func rollingView(_ rollingView: RollingView, cellForIndex index: Int, reuseView: RollingViewCell?) -> RollingViewCell
 	func rollingViewCanAddCellsAbove(_ rollingView: RollingView, completion: @escaping (_ tryAgain: Bool) -> Void)
+}
+
+
+
+class RollingViewCell: UIView {
 }
 
 
@@ -23,7 +28,6 @@ class RollingView: UIScrollView {
 		case bottom
 	}
 
-
 	weak var rollingViewDelegate: RollingViewDelegate?
 
 
@@ -33,14 +37,14 @@ class RollingView: UIScrollView {
 			return
 		}
 		let startIndex = contentView.startIndexForEdge(edge, newViewCount: count)
-		let views = (startIndex..<(startIndex + count)).map { (index) -> UIView in
-			return rollingViewDelegate?.rollingView(self, cellForIndex: index) ?? UIView()
+		let views = (startIndex..<(startIndex + count)).map { (index) -> RollingViewCell in
+			return rollingViewDelegate?.rollingView(self, cellForIndex: index, reuseView: nil) ?? RollingViewCell()
 		}
 		contentView.addViews(to: edge, startIndex: startIndex, views: views)
 	}
 
 
-	func viewFromPoint(_ point: CGPoint) -> UIView? {
+	func viewFromPoint(_ point: CGPoint) -> RollingViewCell? {
 		return contentView.viewFromPoint(convert(point, to: contentView))
 	}
 
@@ -114,7 +118,8 @@ class RollingView: UIScrollView {
 		didSet {
 			if !firstLayout && !reachedEnd && !loadingMore {
 				let offset = contentOffset.y + contentInset.top + safeAreaInsets.top
-				if offset < frame.height {
+				print("contentOffset.y:", contentOffset.y, "  offset:", offset)
+				if offset < 0 /* frame.height */ {
 					loadingMore = true
 					DispatchQueue.main.async(execute: tryLoadMore)
 				}
@@ -170,7 +175,7 @@ private let REFRESH_INDICATOR_TOP_OFFSET: CGFloat = -28
 private class RollingContentView: UIView {
 
 	fileprivate struct Placeholder {
-		var cachedView: UIView? // can be discarded to save memory; this provides our caching mechanism essentially (not yet)
+		var cachedView: RollingViewCell? // can be discarded to save memory; this provides our caching mechanism essentially (not yet)
 		var top: CGFloat
 		var height: CGFloat
 
@@ -178,7 +183,7 @@ private class RollingContentView: UIView {
 			return top + height
 		}
 
-		init(view: UIView) {
+		init(view: RollingViewCell) {
 			self.cachedView = view
 			self.top = view.frame.top
 			self.height = view.frame.height
@@ -190,19 +195,19 @@ private class RollingContentView: UIView {
 
 	private var bgColor: UIColor?
 
-	private var orderedViews: [Placeholder] = []	// ordered by the `y` coordinate
+	private var orderedCells: [Placeholder] = []	// ordered by the `y` coordinate
 
 	private var startIndex = 0
 	private var endIndex = 0
 
 
 	private var contentTop: CGFloat {
-		return orderedViews.first?.top ?? MASTER_OFFSET
+		return orderedCells.first?.top ?? MASTER_OFFSET
 	}
 
 
 	private var contentBottom: CGFloat {
-		return orderedViews.last?.bottom ?? MASTER_OFFSET
+		return orderedCells.last?.bottom ?? MASTER_OFFSET
 	}
 
 
@@ -234,7 +239,7 @@ private class RollingContentView: UIView {
 	}
 
 
-	fileprivate func addViews(to edge: RollingView.Edge, startIndex: Int, views: [UIView]) {
+	fileprivate func addViews(to edge: RollingView.Edge, startIndex: Int, views: [RollingViewCell]) {
 		var totalHeight: CGFloat = 0
 
 		switch edge {
@@ -252,7 +257,7 @@ private class RollingContentView: UIView {
 				newViews.append(Placeholder(view: view))
 				self.addSubview(view)
 			}
-			orderedViews.insert(contentsOf: newViews.reversed(), at: 0)
+			orderedCells.insert(contentsOf: newViews.reversed(), at: 0)
 
 		case .bottom:
 			precondition(startIndex == endIndex)
@@ -261,7 +266,7 @@ private class RollingContentView: UIView {
 				let viewHeight = view.frame.height
 				totalHeight += viewHeight
 				view.frame.top = contentBottom
-				orderedViews.append(Placeholder(view: view))
+				orderedCells.append(Placeholder(view: view))
 				self.addSubview(view)
 			}
 		}
@@ -271,9 +276,9 @@ private class RollingContentView: UIView {
 	}
 
 
-	fileprivate func viewFromPoint(_ point: CGPoint) -> UIView? {
-		let index = orderedViews.binarySearch(top: point.y) - 1
-		if index >= 0 && index < orderedViews.count, let view = orderedViews[index].cachedView, view.frame.contains(point) {
+	fileprivate func viewFromPoint(_ point: CGPoint) -> RollingViewCell? {
+		let index = orderedCells.binarySearch(top: point.y) - 1
+		if index >= 0 && index < orderedCells.count, let view = orderedCells[index].cachedView, view.frame.contains(point) {
 			return view
 		}
 		return nil

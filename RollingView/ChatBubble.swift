@@ -18,7 +18,7 @@ private let STANDARD_MARGINS = UIEdgeInsets(top: 2, left: SMALL_X_MARGIN, bottom
 private let STANDARD_TEXT_INSETS = UIEdgeInsets(top: 9, left: 15, bottom: 9, right: 15)
 
 
-class ChatBubble: UIView {
+class ChatBubble: RollingViewCell {
 
 	@IBOutlet private weak var bubbleView: UIView!
 	@IBOutlet private weak var textLabel: UILabel!
