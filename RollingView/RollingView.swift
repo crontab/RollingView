@@ -35,7 +35,7 @@ class RollingView: UIScrollView {
 	}
 
 
-	func addCells(_ edge: Edge, cellClass: UIView.Type, count: Int) {
+	func addCells(edge: Edge, cellClass: UIView.Type, count: Int) {
 		guard count > 0 else {
 			loadingMore = false
 			return

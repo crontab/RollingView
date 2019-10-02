@@ -42,7 +42,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 			firstLayout = false
 			rollingView.topInset = topBar.frame.height - view.safeAreaInsets.top + 16
 			rollingView.bottomInset = bottomBar.frame.height + 16
-			rollingView.addCells(.bottom, cellClass: LeftChatBubble.self, count: 1)
+			rollingView.addCells(edge: .bottom, cellClass: LeftChatBubble.self, count: 1)
 			indexBounds[RollingView.Edge.bottom.rawValue] += 1
 		}
 	}
@@ -61,7 +61,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 		}
 		indexBounds[edge.rawValue] = index
 		let factory = factories[index % 3 == 0 ? 0 : 1]
-		rollingView.addCells(edge, cellClass: factory, count: 1)
+		rollingView.addCells(edge: edge, cellClass: factory, count: 1)
 	}
 
 
