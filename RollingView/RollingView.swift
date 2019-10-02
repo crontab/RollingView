@@ -14,12 +14,12 @@ protocol RollingViewDelegate: class {
 	/// Set up a cell to be inserted into the RollingView object. This method is called either in response to your call to `addCells(...)` or when a cell is pulled from the recycle pool and needs to be set up for a given index position in the view. The class of the view is the same is when a cell was added using `addCells(...)` at a given position.
 	func rollingView(_ rollingView: RollingView, reuseCell: UIView, forIndex index: Int)
 
-	func rollingViewCanAddCellsAbove(_ rollingView: RollingView, completion: @escaping (_ hasMore: Bool) -> Void)
+	func rollingView(_ rollingView: RollingView, reached edge: RollingView.Edge, completion: @escaping (_ hasMore: Bool) -> Void)
 }
 
 
 extension RollingViewDelegate {
-	func rollingViewCanAddCellsAbove(_ rollingView: RollingView, completion: @escaping (Bool) -> Void) {
+	func rollingView(_ rollingView: RollingView, reached edge: RollingView.Edge, completion: @escaping (_ hasMore: Bool) -> Void) {
 		completion(false)
 	}
 }
@@ -85,7 +85,7 @@ class RollingView: UIScrollView {
 
 	/// Checks if the scroller is within 20 points from the bottom; useful when deciding whether the view should be automatically scrolled to the bottom when adding new cells.
 	var isCloseToBottom: Bool {
-		return (contentSize.height + contentInset.bottom - (contentOffset.y + bounds.height)) < 20
+		return isCloseToBottom(within: 20)
 	}
 
 
@@ -126,18 +126,26 @@ class RollingView: UIScrollView {
 	}
 
 
-	private var reachedEnd: Bool = false
-
+	private var reachedTop: Bool = false
+	private var reachedBottom: Bool = false
 
 	override var contentOffset: CGPoint {
 		didSet {
+			guard !firstLayout else {
+				return
+			}
 			validateVisibleRect()
-			if !firstLayout && !reachedEnd && !loadingMore {
+			if !reachedTop && !loadingMore {
 				let offset = contentOffset.y + contentInset.top + safeAreaInsets.top
-				if offset < frame.height { // try to load a screenful more cells above the existing content
+				if offset < frame.height / 2 { // try to load a screenful more cells above the existing content
 					loadingMore = true
-					DispatchQueue.main.async(execute: tryLoadMore)
+					self.reachedTop = true
+					self.tryLoadMore(edge: .top)
 				}
+			}
+			if !reachedBottom && isCloseToBottom(within: frame.height / 2) {
+				self.reachedBottom = true
+				self.tryLoadMore(edge: .bottom)
 			}
 		}
 	}
@@ -149,15 +157,20 @@ class RollingView: UIScrollView {
 	}
 
 
-	private func tryLoadMore() {
-		guard let rollingViewDelegate = rollingViewDelegate else {
-			loadingMore = false
-			reachedEnd = true
-			return
-		}
-		rollingViewDelegate.rollingViewCanAddCellsAbove(self) { (hasMore) in
-			self.loadingMore = false
-			self.reachedEnd = !hasMore
+	func isCloseToBottom(within pixels: CGFloat) -> Bool {
+		return (contentSize.height + contentInset.bottom - (contentOffset.y + bounds.height)) < pixels
+	}
+
+
+	private func tryLoadMore(edge: Edge) {
+		rollingViewDelegate?.rollingView(self, reached: edge) { (hasMore) in
+			switch edge {
+			case .top:
+				self.loadingMore = false
+				self.reachedTop = !hasMore
+			case .bottom:
+				self.reachedBottom = !hasMore
+			}
 		}
 	}
 
@@ -183,21 +196,27 @@ class RollingView: UIScrollView {
 	private static let CONTENT_HEIGHT: CGFloat = 10_000_000
 	private static let MASTER_OFFSET = CONTENT_HEIGHT / 2
 	private static let REFRESH_INDICATOR_TOP_OFFSET: CGFloat = -28
-
+	private static let REFRESH_INDICATOR_SIZE: CGFloat = 20
 
 	private var refreshIndicator: UIActivityIndicatorView!
 
 
 	private func setupContentView() {
 		precondition(contentView == nil)
+
 		let view = UIView(frame: CGRect(x: 0, y: -Self.MASTER_OFFSET, width: frame.width, height: Self.CONTENT_HEIGHT))
+		view.autoresizingMask = [.flexibleWidth, .flexibleBottomMargin]
 		view.backgroundColor = backgroundColor
-		let indicatorSide: CGFloat = 20
-		refreshIndicator = UIActivityIndicatorView(frame: CGRect(x: (frame.width - indicatorSide) / 2, y: Self.MASTER_OFFSET + Self.REFRESH_INDICATOR_TOP_OFFSET, width: indicatorSide, height: indicatorSide))
+
+		refreshIndicator = UIActivityIndicatorView(frame: CGRect(
+			x: (view.frame.width - Self.REFRESH_INDICATOR_SIZE) / 2,
+			y: Self.MASTER_OFFSET + Self.REFRESH_INDICATOR_TOP_OFFSET,
+			width: Self.REFRESH_INDICATOR_SIZE,
+			height: Self.REFRESH_INDICATOR_SIZE))
 		refreshIndicator.autoresizingMask = [.flexibleLeftMargin, .flexibleRightMargin]
 		refreshIndicator.style = .gray
 		view.addSubview(refreshIndicator)
-		view.autoresizingMask = [.flexibleWidth, .flexibleBottomMargin]
+
 		insertSubview(view, at: 0)
 		contentView = view
 	}

@@ -17,8 +17,6 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	@IBOutlet weak var bottomBar: UIView!
 
 
-	private let factories = [LeftChatBubble.self, RightChatBubble.self]
-
 	private var lines = try! String(contentsOfFile: Bundle.main.path(forResource: "Bukowski", ofType: "txt")!, encoding: .utf8).components(separatedBy: .newlines).filter { !$0.isEmpty }
 
 
@@ -42,26 +40,24 @@ class MainViewController: UIViewController, RollingViewDelegate {
 			firstLayout = false
 			rollingView.contentInset.top = topBar.frame.height - view.safeAreaInsets.top + 16
 			rollingView.contentInset.bottom = bottomBar.frame.height + 16
-			rollingView.addCells(edge: .bottom, cellClass: LeftChatBubble.self, count: 1)
-			indexBounds[RollingView.Edge.bottom.rawValue] += 1
 		}
 	}
 
 
-	var indexBounds = [0, 0]
+	private let factories = [LeftChatBubble.self, RightChatBubble.self]
+	private var indexBounds = [0, 0] // this is just to keep the left/right bubble distribution
+
+
+	private func factoryForEdge(_ edge: RollingView.Edge) -> ChatBubble.Type {
+		indexBounds[edge.rawValue] += 1
+		return factories[indexBounds[edge.rawValue] % 3 == 0 ? 0 : 1]
+	}
+
 
 	@IBAction func addAction(_ sender: UIButton) {
 		let edge = RollingView.Edge(rawValue: sender.tag)!
-		var index = indexBounds[edge.rawValue]
-		switch edge {
-		case .top:
-			index -= 1
-		case .bottom:
-			index += 1
-		}
-		indexBounds[edge.rawValue] = index
-		let factory = factories[index % 3 == 0 ? 0 : 1]
 		let isCloseToBottom = rollingView.isCloseToBottom
+		let factory = factoryForEdge(edge)
 		rollingView.addCells(edge: edge, cellClass: factory, count: 1)
 		if edge == .bottom && isCloseToBottom {
 			rollingView.scrollToBottom(animated: true)
@@ -74,12 +70,18 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	}
 
 
-	func rollingViewCanAddCellsAbove(_ rollingView: RollingView, completion: @escaping (Bool) -> Void) {
-//		DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-//			rollingView.addCells(.top, count: 2)
-//			completion(true)
-//		}
-		completion(false)
+	func rollingView(_ rollingView: RollingView, reached edge: RollingView.Edge, completion: @escaping (_ hasMore: Bool) -> Void) {
+		switch edge {
+		case .top:
+			DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+				rollingView.addCells(edge: edge, cellClass: self.factoryForEdge(edge), count: 1)
+				completion(true)
+			}
+			break
+		case .bottom:
+			rollingView.addCells(edge: edge, cellClass: factoryForEdge(edge), count: 1)
+			completion(false)
+		}
 	}
 
 
