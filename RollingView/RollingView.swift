@@ -27,7 +27,7 @@ class RollingView: UIScrollView {
 
 	weak var rollingViewDelegate: RollingViewDelegate?
 
-	var warmCellCount: Int = 5
+	var warmCellCount: Int = 5 // extra cells to keep "hot" in memory in each direction beyond the visible ones, i.e. total of 10 will be hot
 
 
 	func register(cellClass: UIView.Type, create: @escaping () -> UIView) {
@@ -63,7 +63,6 @@ class RollingView: UIScrollView {
 	// MARK: - Protected; scroller
 
 	private var contentView: UIView!
-	private var recyclePool = CommonPool()
 	private var firstLayout = true
 
 
@@ -210,7 +209,7 @@ class RollingView: UIScrollView {
 
 
 	fileprivate struct Placeholder {
-		var cell: UIView? // can be discarded to save memory; this provides our caching mechanism essentially (not yet)
+		var cell: UIView? // can be discarded to save memory
 		var cellClass: UIView.Type
 		var top: CGFloat
 		var height: CGFloat
@@ -249,7 +248,8 @@ class RollingView: UIScrollView {
 	}
 
 
-	private var placeholders: [Placeholder] = []	// ordered by the `y` coordinate
+	private var recyclePool = CommonPool()
+	private var placeholders: [Placeholder] = []	// ordered by the `y` coordinate so that binarySearch() can be used on it
 
 	// Always negative or 0; from the user's perspective the cells added to the top have negative indices
 	private var userStartIndex = 0
@@ -269,7 +269,7 @@ class RollingView: UIScrollView {
 	}
 
 
-	private func startIndexForEdge(_ edge: RollingView.Edge, newViewCount count: Int) -> Int {
+	private func startIndexForEdge(_ edge: Edge, newViewCount count: Int) -> Int {
 		switch edge {
 		case .top:
 			return userStartIndex - count
@@ -279,7 +279,7 @@ class RollingView: UIScrollView {
 	}
 
 
-	private func addCells(to edge: RollingView.Edge, cells: [UIView]) -> CGFloat {
+	private func addCells(to edge: Edge, cells: [UIView]) -> CGFloat {
 		var totalHeight: CGFloat = 0
 
 		switch edge {
@@ -295,7 +295,7 @@ class RollingView: UIScrollView {
 				totalHeight += cellHeight
 				cell.frame.origin.y = top
 
-				// If the hot window is not at the top, then add a placeholder and send the poor cell to the recycling pool
+				// If the hot window is not at the top, then add a placeholder and send the cell to the recycling pool
 				if topHotIndex > 0 {
 					newCells.append(Placeholder(cellClass: type(of: cell), top: top, height: cellHeight))
 					recyclePool.enqueue(cell)
@@ -313,7 +313,7 @@ class RollingView: UIScrollView {
 				totalHeight += cellHeight
 				cell.frame.origin.y = contentBottom
 
-				// If this is beyond our hot area, then add a placeholder and send the poor cell to the recycling pool
+				// If this is beyond our hot area, then add a placeholder and send the cell to the recycling pool
 				if bottomHotIndex < placeholders.count - 1 {
 					placeholders.append(Placeholder(cellClass: type(of: cell), top: contentBottom, height: cellHeight))
 					recyclePool.enqueue(cell)
