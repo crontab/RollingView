@@ -292,8 +292,7 @@ class RollingView: UIScrollView {
 					recyclePool.enqueue(cell)
 				}
 				else {
-					newCells.append(Placeholder(cell: cell))
-					contentView.addSubview(cell)
+					newCells.append(Placeholder(cell: cell, addToSuperview: contentView))
 				}
 			}
 			placeholders.insert(contentsOf: newCells.reversed(), at: 0)
@@ -311,8 +310,7 @@ class RollingView: UIScrollView {
 					recyclePool.enqueue(cell)
 				}
 				else {
-					placeholders.append(Placeholder(cell: cell))
-					contentView.addSubview(cell)
+					placeholders.append(Placeholder(cell: cell, addToSuperview: contentView))
 				}
 			}
 			footerView?.frame.origin.y += totalHeight
@@ -428,18 +426,12 @@ class RollingView: UIScrollView {
 			self.height = height
 		}
 
-		init(cell: UIView) {
+		init(cell: UIView, addToSuperview superview: UIView) {
 			self.cell = cell
 			self.cellClass = type(of: cell)
 			self.top = cell.frame.minY
 			self.height = cell.frame.height
-		}
-
-		mutating func detach() -> UIView {
-			let temp = cell!
-			temp.removeFromSuperview()
-			cell = nil
-			return temp
+			superview.addSubview(cell)
 		}
 
 		mutating func attach(cell: UIView, toSuperview superview: UIView) {
@@ -448,6 +440,13 @@ class RollingView: UIScrollView {
 			cell.frame.origin.y = top
 			cell.frame.size.height = height
 			superview.addSubview(cell)
+		}
+
+		mutating func detach() -> UIView {
+			let temp = cell!
+			temp.removeFromSuperview()
+			cell = nil
+			return temp
 		}
 	}
 }
