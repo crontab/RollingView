@@ -76,11 +76,20 @@ class RollingView: UIScrollView {
 	private var firstLayout = true
 
 
-	override func awakeFromNib() {
-		super.awakeFromNib()
-		contentView = createContentView(parentWindowWidth: frame.width, backgroundColor: backgroundColor)
-		contentView.autoresizingMask = [.flexibleWidth, .flexibleBottomMargin]
-		insertSubview(contentView, at: 0)
+	override init(frame: CGRect) {
+		super.init(frame: frame)
+		setupContentView()
+	}
+
+
+	required init?(coder: NSCoder) {
+		super.init(coder: coder)
+		setupContentView()
+	}
+
+
+	override var backgroundColor: UIColor? {
+		didSet { contentView?.backgroundColor = backgroundColor }
 	}
 
 
@@ -99,16 +108,6 @@ class RollingView: UIScrollView {
 
 
 	private var reachedEnd: Bool = false
-	private var loadingMore: Bool = false {
-		didSet {
-			if loadingMore {
-				refreshIndicator.startAnimating()
-			}
-			else {
-				refreshIndicator.stopAnimating()
-			}
-		}
-	}
 
 
 	override var contentOffset: CGPoint {
@@ -160,8 +159,7 @@ class RollingView: UIScrollView {
 	}
 
 
-	// MARK: - Protected; cell management
-
+	// MARK: - internal: contentView
 
 	private static let CONTENT_HEIGHT: CGFloat = 10_000_000
 	private static let MASTER_OFFSET = CONTENT_HEIGHT / 2
@@ -170,61 +168,35 @@ class RollingView: UIScrollView {
 
 	private var refreshIndicator: UIActivityIndicatorView!
 
-	override var backgroundColor: UIColor? {
-		didSet { contentView?.backgroundColor = backgroundColor }
-	}
 
-	private func createContentView(parentWindowWidth: CGFloat, backgroundColor: UIColor?) -> UIView {
-		let view = UIView(frame: CGRect(x: 0, y: -Self.MASTER_OFFSET, width: parentWindowWidth, height: Self.CONTENT_HEIGHT))
+	private func setupContentView() {
+		precondition(contentView == nil)
+		let view = UIView(frame: CGRect(x: 0, y: -Self.MASTER_OFFSET, width: frame.width, height: Self.CONTENT_HEIGHT))
 		view.backgroundColor = backgroundColor
 		let indicatorSide: CGFloat = 20
-		refreshIndicator = UIActivityIndicatorView(frame: CGRect(x: (parentWindowWidth - indicatorSide) / 2, y: Self.MASTER_OFFSET + Self.REFRESH_INDICATOR_TOP_OFFSET, width: indicatorSide, height: indicatorSide))
+		refreshIndicator = UIActivityIndicatorView(frame: CGRect(x: (frame.width - indicatorSide) / 2, y: Self.MASTER_OFFSET + Self.REFRESH_INDICATOR_TOP_OFFSET, width: indicatorSide, height: indicatorSide))
 		refreshIndicator.autoresizingMask = [.flexibleLeftMargin, .flexibleRightMargin]
 		refreshIndicator.style = .gray
 		view.addSubview(refreshIndicator)
-		return view
+		view.autoresizingMask = [.flexibleWidth, .flexibleBottomMargin]
+		insertSubview(view, at: 0)
+		contentView = view
 	}
 
 
-	fileprivate struct Placeholder {
-		var cell: UIView? // can be discarded to save memory
-		var cellClass: UIView.Type
-		var top: CGFloat
-		var height: CGFloat
-
-		var bottom: CGFloat {
-			return top + height
-		}
-
-		init(cellClass: UIView.Type, top: CGFloat, height: CGFloat) {
-			self.cellClass = cellClass
-			self.top = top
-			self.height = height
-		}
-
-		init(cell: UIView) {
-			self.cell = cell
-			self.cellClass = type(of: cell)
-			self.top = cell.frame.minY
-			self.height = cell.frame.height
-		}
-
-		mutating func detach() -> UIView {
-			let temp = cell!
-			temp.removeFromSuperview()
-			cell = nil
-			return temp
-		}
-
-		mutating func attach(cell: UIView, toSuperview superview: UIView) {
-			precondition(self.cell == nil)
-			self.cell = cell
-			cell.frame.origin.y = top
-			cell.frame.size.height = height
-			superview.addSubview(cell)
+	private var loadingMore: Bool = false {
+		didSet {
+			if loadingMore {
+				refreshIndicator.startAnimating()
+			}
+			else {
+				refreshIndicator.stopAnimating()
+			}
 		}
 	}
 
+
+	// MARK: - internal: cell management
 
 	private var recyclePool = CommonPool()
 	private var placeholders: [Placeholder] = []	// ordered by the `y` coordinate so that binarySearch() can be used on it
@@ -349,7 +321,7 @@ class RollingView: UIScrollView {
 	}
 
 
-	// MARK: - Protected; recycle pool
+	// MARK: - internal classes
 
 	private class CommonPool {
 
@@ -395,6 +367,46 @@ class RollingView: UIScrollView {
 		}
 
 		private var dict: [ObjectIdentifier: Pool] = [:]
+	}
+
+
+	fileprivate struct Placeholder {
+		var cell: UIView? // can be discarded to save memory
+		var cellClass: UIView.Type
+		var top: CGFloat
+		var height: CGFloat
+
+		var bottom: CGFloat {
+			return top + height
+		}
+
+		init(cellClass: UIView.Type, top: CGFloat, height: CGFloat) {
+			self.cellClass = cellClass
+			self.top = top
+			self.height = height
+		}
+
+		init(cell: UIView) {
+			self.cell = cell
+			self.cellClass = type(of: cell)
+			self.top = cell.frame.minY
+			self.height = cell.frame.height
+		}
+
+		mutating func detach() -> UIView {
+			let temp = cell!
+			temp.removeFromSuperview()
+			cell = nil
+			return temp
+		}
+
+		mutating func attach(cell: UIView, toSuperview superview: UIView) {
+			precondition(self.cell == nil)
+			self.cell = cell
+			cell.frame.origin.y = top
+			cell.frame.size.height = height
+			superview.addSubview(cell)
+		}
 	}
 }
 
