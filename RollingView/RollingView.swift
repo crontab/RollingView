@@ -10,12 +10,22 @@ import UIKit
 
 
 protocol RollingViewDelegate: class {
+
+	/// Set up a cell to be inserted into the RollingView object. This method is called either in response to your call to `addCells(...)` or when a cell is pulled from the recycle pool and needs to be set up for a given index position in the view. The class of the view is the same is when a cell was added using `addCells(...)` at a given position.
 	func rollingView(_ rollingView: RollingView, reuseCell: UIView, forIndex index: Int)
-	func rollingViewCanAddCellsAbove(_ rollingView: RollingView, completion: @escaping (_ tryAgain: Bool) -> Void)
+
+	func rollingViewCanAddCellsAbove(_ rollingView: RollingView, completion: @escaping (_ hasMore: Bool) -> Void)
 }
 
 
+extension RollingViewDelegate {
+	func rollingViewCanAddCellsAbove(_ rollingView: RollingView, completion: @escaping (Bool) -> Void) {
+		completion(false)
+	}
+}
 
+
+/// A powerful infinite scroller suitable for e.g. chat apps. With RollingView you can add content in both directions; the class also manages memory in the most efficient way by reusing cells. RollingView can contain horizontal cells of any subclass of UIView. Content in either direction can be added either programmatically or in response to hitting one of the edges of the existing content, i.e. top or bottom.
 class RollingView: UIScrollView {
 
 	// MARK: - Public
@@ -25,16 +35,25 @@ class RollingView: UIScrollView {
 		case bottom
 	}
 
+	/// See RollingViewDelegate: you need to implement at least `rollingView(_:reuseCell:forIndex:)`
 	weak var rollingViewDelegate: RollingViewDelegate?
 
-	var warmCellCount: Int = 5 // extra cells to keep "hot" in memory in each direction beyond the visible ones, i.e. total of 10 will be hot
+	/// The area that should be kept "hot" in memory expressed in number of screens beyond the visible part. Value of 1 means half a screen above and half a screen below will be kept hot, the rest may be discarded and the cells sent to the recycle pool for further reuse.
+	var hotAreaFactor: CGFloat = 1 {
+		didSet { precondition(hotAreaFactor >= 1) }
+	}
 
+	/// Extra cells to keep "warm" in memory in each direction, in addition to the "hot" part. "Warm" means the cells will not be discarded immediately, however neither are they required to be in memory yet like in the hot part. This provides certain inertia in how cells are discarded and reused.
+	var warmCellCount: Int = 10 {
+		didSet { precondition(warmCellCount >= 2) }
+	}
 
+	/// Register a cell class along with its factory method create()
 	func register(cellClass: UIView.Type, create: @escaping () -> UIView) {
 		recyclePool.register(cellClass: cellClass, create: create)
 	}
 
-
+	/// Tell RollingView that cells should be added either on top or to the bottom of the existing content. Your `rollingView(_:reuseCell:forIndex:)` implementation will be called for each of the added cells.
 	func addCells(edge: Edge, cellClass: UIView.Type, count: Int) {
 		guard count > 0 else {
 			loadingMore = false
@@ -49,7 +68,7 @@ class RollingView: UIScrollView {
 		contentDidAddSpace(edge: edge, addedHeight: totalHeight)
 	}
 
-
+	/// Returns a cell given a point on screen in RollingVIew's coordinate space.
 	func cellFromPoint(_ point: CGPoint) -> UIView? {
 		let point = convert(point, to: contentView)
 		let index = placeholders.binarySearch(top: point.y) - 1
@@ -59,12 +78,12 @@ class RollingView: UIScrollView {
 		return nil
 	}
 
-
+	/// Scrolls to the bottom of content; useful when new cells appear at the bottom in a chat roll
 	func scrollToBottom(animated: Bool) {
 		self.scrollRectToVisible(CGRect(x: 0, y: self.contentSize.height - 1, width: 1, height: 1), animated: animated)
 	}
 
-
+	/// Checks if the scroller is within 20 points from the bottom; useful when deciding whether the view should be automatically scrolled to the bottom when adding new cells.
 	var isCloseToBottom: Bool {
 		return (contentSize.height + contentInset.bottom - (contentOffset.y + bounds.height)) < 20
 	}
@@ -136,9 +155,9 @@ class RollingView: UIScrollView {
 			reachedEnd = true
 			return
 		}
-		rollingViewDelegate.rollingViewCanAddCellsAbove(self) { (tryAgain) in
+		rollingViewDelegate.rollingViewCanAddCellsAbove(self) { (hasMore) in
 			self.loadingMore = false
-			self.reachedEnd = !tryAgain
+			self.reachedEnd = !hasMore
 		}
 	}
 
@@ -289,8 +308,8 @@ class RollingView: UIScrollView {
 
 		// TODO: skip if the change wasn't significant
 
-		// 2 screens of cells should be kept "hot" in memory, i.e. half-screen above and half-screen below the visible rect objects should be available
-		let hotRect = rect.insetBy(dx: 0, dy: -rect.height / 2)
+		// Certain number of screens should be kept "hot" in memory, e.g. for hotAreaFactor=1 half-screen above and half-screen below the visible area all objects should be available
+		let hotRect = rect.insetBy(dx: 0, dy: -(rect.height * hotAreaFactor / 2))
 
 		topHotIndex = max(0, placeholders.binarySearch(top: hotRect.minY) - 1)
 		var index = topHotIndex
@@ -304,14 +323,14 @@ class RollingView: UIScrollView {
 		bottomHotIndex = index - 1
 
 		// Expand the hot area by warmCellCount more cells in both directions; everything beyond that can be freed:
-		index = topHotIndex - warmCellCount
+		index = topHotIndex - warmCellCount / 2
 		while index >= 0 && placeholders[index].cell != nil {
 			let detachedCell = placeholders[index].detach()
 			recyclePool.enqueue(detachedCell)
 			index -= 1
 		}
 
-		index = bottomHotIndex + warmCellCount
+		index = bottomHotIndex + warmCellCount / 2
 		while index < placeholders.count && placeholders[index].cell != nil {
 			let detachedCell = placeholders[index].detach()
 			recyclePool.enqueue(detachedCell)
