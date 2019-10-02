@@ -9,6 +9,10 @@
 import UIKit
 
 
+class HeaderView: UIView { }
+class FooterView: UIView { }
+
+
 class MainViewController: UIViewController, RollingViewDelegate {
 
 	@IBOutlet weak var rollingView: RollingView!
@@ -38,8 +42,10 @@ class MainViewController: UIViewController, RollingViewDelegate {
 		super.viewDidLayoutSubviews()
 		if firstLayout {
 			firstLayout = false
-			rollingView.contentInset.top = topBar.frame.height - view.safeAreaInsets.top + 16
-			rollingView.contentInset.bottom = bottomBar.frame.height + 16
+			rollingView.contentInset.top = topBar.frame.height - view.safeAreaInsets.top
+			rollingView.contentInset.bottom = bottomBar.frame.height
+			rollingView.headerView = HeaderView.fromNib()
+			rollingView.footerView = FooterView.fromNib()
 		}
 	}
 
@@ -73,11 +79,11 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	func rollingView(_ rollingView: RollingView, reached edge: RollingView.Edge, completion: @escaping (_ hasMore: Bool) -> Void) {
 		switch edge {
 		case .top:
-			DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-				rollingView.addCells(edge: edge, cellClass: self.factoryForEdge(edge), count: 1)
-				completion(true)
-			}
-			break
+//			DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+//				rollingView.addCells(edge: edge, cellClass: self.factoryForEdge(edge), count: 1)
+//				completion(true)
+//			}
+			completion(false)
 		case .bottom:
 			rollingView.addCells(edge: edge, cellClass: factoryForEdge(edge), count: 1)
 			completion(false)

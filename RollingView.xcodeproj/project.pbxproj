@@ -17,6 +17,8 @@
 		368DC4F323423922000C810B /* LeftChatBubble.xib in Resources */ = {isa = PBXBuildFile; fileRef = 368DC4F223423921000C810B /* LeftChatBubble.xib */; };
 		368DC4F5234239DF000C810B /* ChatBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = 368DC4F4234239DF000C810B /* ChatBubble.swift */; };
 		368DC4F7234241D4000C810B /* RightChatBubble.xib in Resources */ = {isa = PBXBuildFile; fileRef = 368DC4F6234241D4000C810B /* RightChatBubble.xib */; };
+		36D1F6F02344D336002F5AC1 /* HeaderView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 36D1F6EF2344D336002F5AC1 /* HeaderView.xib */; };
+		36D1F6F22344D89D002F5AC1 /* FooterView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 36D1F6F12344D89D002F5AC1 /* FooterView.xib */; };
 		36DAF5ED2344AA32007AB7B7 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 36DAF5EC2344AA32007AB7B7 /* README.md */; };
 /* End PBXBuildFile section */
 
@@ -33,6 +35,8 @@
 		368DC4F223423921000C810B /* LeftChatBubble.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = LeftChatBubble.xib; sourceTree = "<group>"; };
 		368DC4F4234239DF000C810B /* ChatBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBubble.swift; sourceTree = "<group>"; };
 		368DC4F6234241D4000C810B /* RightChatBubble.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = RightChatBubble.xib; sourceTree = "<group>"; };
+		36D1F6EF2344D336002F5AC1 /* HeaderView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = HeaderView.xib; sourceTree = "<group>"; };
+		36D1F6F12344D89D002F5AC1 /* FooterView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = FooterView.xib; sourceTree = "<group>"; };
 		36DAF5EC2344AA32007AB7B7 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -72,6 +76,8 @@
 				368DC4F223423921000C810B /* LeftChatBubble.xib */,
 				368DC4F6234241D4000C810B /* RightChatBubble.xib */,
 				3612145622A85B7A000536A0 /* MainViewController.swift */,
+				36D1F6EF2344D336002F5AC1 /* HeaderView.xib */,
+				36D1F6F12344D89D002F5AC1 /* FooterView.xib */,
 				3612145822A85B7A000536A0 /* Main.storyboard */,
 				3612145422A85B7A000536A0 /* AppDelegate.swift */,
 				3612145E22A85B7C000536A0 /* Assets.xcassets */,
@@ -143,6 +149,8 @@
 				368DC4F323423922000C810B /* LeftChatBubble.xib in Resources */,
 				3612146222A85B7C000536A0 /* LaunchScreen.storyboard in Resources */,
 				3612145F22A85B7C000536A0 /* Assets.xcassets in Resources */,
+				36D1F6F02344D336002F5AC1 /* HeaderView.xib in Resources */,
+				36D1F6F22344D89D002F5AC1 /* FooterView.xib in Resources */,
 				36DAF5ED2344AA32007AB7B7 /* README.md in Resources */,
 				3612145A22A85B7A000536A0 /* Main.storyboard in Resources */,
 				368DC4F7234241D4000C810B /* RightChatBubble.xib in Resources */,

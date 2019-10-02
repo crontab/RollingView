@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14490.70" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
-    <device id="retina5_9" orientation="portrait">
-        <adaptation id="fullscreen"/>
-    </device>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14868" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+    <device id="retina5_9" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14490.49"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14824"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -38,11 +36,21 @@
                                             <nil key="textColor"/>
                                             <nil key="highlightedColor"/>
                                         </label>
+                                        <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="VQe-Bc-nLk">
+                                            <rect key="frame" x="0.0" y="126" width="375" height="2"/>
+                                            <color key="backgroundColor" systemColor="secondarySystemBackgroundColor" red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                            <constraints>
+                                                <constraint firstAttribute="height" constant="2" id="lgj-xJ-Wiz"/>
+                                            </constraints>
+                                        </view>
                                     </subviews>
                                     <constraints>
+                                        <constraint firstItem="VQe-Bc-nLk" firstAttribute="leading" secondItem="Ece-Fs-dx8" secondAttribute="leading" id="Jr0-Pa-A9n"/>
                                         <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="HOm-HW-5Jg" secondAttribute="trailing" constant="18" id="Wi3-cM-KFF"/>
+                                        <constraint firstAttribute="trailing" secondItem="VQe-Bc-nLk" secondAttribute="trailing" id="fJ9-cz-VqT"/>
                                         <constraint firstItem="HOm-HW-5Jg" firstAttribute="leading" secondItem="Ece-Fs-dx8" secondAttribute="leading" constant="18" id="kks-Un-tjn"/>
                                         <constraint firstAttribute="bottom" secondItem="HOm-HW-5Jg" secondAttribute="bottom" constant="18" id="maL-zf-iEN"/>
+                                        <constraint firstAttribute="bottom" secondItem="VQe-Bc-nLk" secondAttribute="bottom" id="txt-ZQ-rOG"/>
                                     </constraints>
                                 </view>
                                 <blurEffect style="light"/>

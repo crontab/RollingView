@@ -88,6 +88,42 @@ class RollingView: UIScrollView {
 		return isCloseToBottom(within: 20)
 	}
 
+	/// Header view, similar to UITableView's
+	var headerView: UIView? {
+		willSet {
+			if let headerView = headerView {
+				headerView.removeFromSuperview()
+				contentDidAddSpace(edge: .top, addedHeight: -headerView.frame.height)
+			}
+		}
+		didSet {
+			if let headerView = headerView {
+				headerView.frame.origin.y = contentTop - headerView.frame.height
+				headerView.frame.size.width = frame.width
+				contentView.addSubview(headerView)
+				contentDidAddSpace(edge: .top, addedHeight: headerView.frame.height)
+			}
+		}
+	}
+
+	/// Footer view, similar to UITableView's
+	var footerView: UIView? {
+		willSet {
+			if let footerView = footerView {
+				footerView.removeFromSuperview()
+				contentDidAddSpace(edge: .bottom, addedHeight: -footerView.frame.height)
+			}
+		}
+		didSet {
+			if let footerView = footerView {
+				footerView.frame.origin.y = contentBottom
+				footerView.frame.size.width = frame.width
+				contentView.addSubview(footerView)
+				contentDidAddSpace(edge: .bottom, addedHeight: footerView.frame.height)
+			}
+		}
+	}
+
 
 	// MARK: - Protected; scroller
 
@@ -167,21 +203,6 @@ class RollingView: UIScrollView {
 	}
 
 
-	private func contentDidAddSpace(edge: Edge, addedHeight: CGFloat) {
-		layout()
-		contentSize.height += addedHeight
-		switch edge {
-		case .top:
-			// The magic part of RollingView: when extra space is added on top, contentView and contentSize are adjusted here to create an illusion of infinite expansion:
-			let delta = bounds.height - safeAreaInsets.bottom - safeAreaInsets.top - contentInset.top - contentInset.bottom - contentSize.height
-			contentOffset.y += max(0, min(addedHeight, -delta))
-			contentView.frame.origin.y += addedHeight
-		case .bottom:
-			break
-		}
-	}
-
-
 	// MARK: - internal: contentView
 
 	private static let CONTENT_HEIGHT: CGFloat = 10_000_000
@@ -197,6 +218,22 @@ class RollingView: UIScrollView {
 		view.backgroundColor = backgroundColor
 		insertSubview(view, at: 0)
 		contentView = view
+	}
+
+
+	private func contentDidAddSpace(edge: Edge, addedHeight: CGFloat) {
+		layout()
+		contentSize.height += addedHeight
+		switch edge {
+		case .top:
+			// The magic part of RollingView: when extra space is added on top, contentView and contentSize are adjusted here to create an illusion of infinite expansion:
+			let delta = safeAreaInsets.top + contentInset.top + contentInset.bottom + safeAreaInsets.bottom + contentSize.height - bounds.height
+			// The below is to ensure that when new content is added on top, the scroller doesn't move visually (though it does in terms of relative coordinates). It gets a bit trickier when the overall size of content is smaller than the visual bounds, hence:
+			contentOffset.y += max(0, min(addedHeight, delta))
+			contentView.frame.origin.y += addedHeight
+		case .bottom:
+			break
+		}
 	}
 
 
@@ -260,6 +297,7 @@ class RollingView: UIScrollView {
 				}
 			}
 			placeholders.insert(contentsOf: newCells.reversed(), at: 0)
+			headerView?.frame.origin.y -= totalHeight
 
 		case .bottom:
 			for cell in cells {
@@ -277,6 +315,7 @@ class RollingView: UIScrollView {
 					contentView.addSubview(cell)
 				}
 			}
+			footerView?.frame.origin.y += totalHeight
 		}
 
 		return totalHeight
