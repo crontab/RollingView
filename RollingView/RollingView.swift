@@ -14,7 +14,7 @@ protocol RollingViewDelegate: class {
 	/// Set up a cell to be inserted into the RollingView object. This method is called either in response to your call to `addCells(...)` or when a cell is pulled from the recycle pool and needs to be set up for a given index position in the view. The class of the view is the same is when a cell was added using `addCells(...)` at a given position.
 	func rollingView(_ rollingView: RollingView, reuseCell: UIView, forIndex index: Int)
 
-	/// Try to load more data and create cells accordingly, possibly asynchronously. `completion` takes a boolean parameter that indicates whether more attempt should be made for a given `edge` in the future.
+	/// Try to load more data and create cells accordingly, possibly asynchronously. `completion` takes a boolean parameter that indicates whether more attempts should be made for a given `edge` in the future. Once `completion` returns false this delegate method will not be called again for a given `edge`. Optional.
 	func rollingView(_ rollingView: RollingView, reached edge: RollingView.Edge, completion: @escaping (_ hasMore: Bool) -> Void)
 }
 
@@ -54,8 +54,8 @@ class RollingView: UIScrollView {
 		recyclePool.register(cellClass: cellClass, create: create)
 	}
 
-	/// Tell RollingView that cells should be added either on top or to the bottom of the existing content. Your `rollingView(_:reuseCell:forIndex:)` implementation will be called for each of the added cells.
-	func addCells(edge: Edge, cellClass: UIView.Type, count: Int) {
+	/// Tell RollingView that cells should be added either on top or to the bottom of the existing content. Your `rollingView(_:reuseCell:forIndex:)` implementation will be called for each of the added cells. Optionally the cell can fade-in animated.
+	func addCells(edge: Edge, cellClass: UIView.Type, count: Int, animated: Bool) {
 		guard count > 0 else {
 			return
 		}
@@ -63,9 +63,9 @@ class RollingView: UIScrollView {
 		let views = (startIndex..<(startIndex + count)).map { (index) -> UIView in
 			return self.recyclePool.dequeue(forIndex: index, cellClass: cellClass, width: contentView.frame.width, reuseCell: reuseCell)
 		}
-		let totalHeight = addCells(to: edge, cells: views)
+		let totalHeight = addCells(to: edge, cells: views, animated: animated)
 		validateVisibleRect()
-		contentDidAddSpace(edge: edge, addedHeight: totalHeight)
+		contentDidAddSpace(edge: edge, addedHeight: totalHeight, animated: animated)
 	}
 
 	/// Returns a cell given a point on screen in RollingVIew's coordinate space.
@@ -93,7 +93,7 @@ class RollingView: UIScrollView {
 		willSet {
 			if let headerView = headerView {
 				headerView.removeFromSuperview()
-				contentDidAddSpace(edge: .top, addedHeight: -headerView.frame.height)
+				contentDidAddSpace(edge: .top, addedHeight: -headerView.frame.height, animated: false)
 			}
 		}
 		didSet {
@@ -101,7 +101,7 @@ class RollingView: UIScrollView {
 				headerView.frame.origin.y = contentTop - headerView.frame.height
 				headerView.frame.size.width = frame.width
 				contentView.addSubview(headerView)
-				contentDidAddSpace(edge: .top, addedHeight: headerView.frame.height)
+				contentDidAddSpace(edge: .top, addedHeight: headerView.frame.height, animated: false)
 			}
 		}
 	}
@@ -111,7 +111,7 @@ class RollingView: UIScrollView {
 		willSet {
 			if let footerView = footerView {
 				footerView.removeFromSuperview()
-				contentDidAddSpace(edge: .bottom, addedHeight: -footerView.frame.height)
+				contentDidAddSpace(edge: .bottom, addedHeight: -footerView.frame.height, animated: false)
 			}
 		}
 		didSet {
@@ -119,7 +119,7 @@ class RollingView: UIScrollView {
 				footerView.frame.origin.y = contentBottom
 				footerView.frame.size.width = frame.width
 				contentView.addSubview(footerView)
-				contentDidAddSpace(edge: .bottom, addedHeight: footerView.frame.height)
+				contentDidAddSpace(edge: .bottom, addedHeight: footerView.frame.height, animated: false)
 			}
 		}
 	}
@@ -209,6 +209,7 @@ class RollingView: UIScrollView {
 	private static let MASTER_OFFSET = CONTENT_HEIGHT / 2
 	private static let REFRESH_INDICATOR_TOP_OFFSET: CGFloat = -28
 	private static let REFRESH_INDICATOR_SIZE: CGFloat = 20
+	private static let ANIMATION_DURATION = 0.25
 
 
 	private func setupContentView() {
@@ -221,16 +222,18 @@ class RollingView: UIScrollView {
 	}
 
 
-	private func contentDidAddSpace(edge: Edge, addedHeight: CGFloat) {
+	private func contentDidAddSpace(edge: Edge, addedHeight: CGFloat, animated: Bool) {
 		layout()
 		contentSize.height += addedHeight
 		switch edge {
 		case .top:
-			// The magic part of RollingView: when extra space is added on top, contentView and contentSize are adjusted here to create an illusion of infinite expansion:
-			let delta = safeAreaInsets.top + contentInset.top + contentInset.bottom + safeAreaInsets.bottom + contentSize.height - bounds.height
-			// The below is to ensure that when new content is added on top, the scroller doesn't move visually (though it does in terms of relative coordinates). It gets a bit trickier when the overall size of content is smaller than the visual bounds, hence:
-			contentOffset.y += max(0, min(addedHeight, delta))
-			contentView.frame.origin.y += addedHeight
+			UIView.animate(withDuration: animated ? Self.ANIMATION_DURATION : 0) {
+				// The magic part of RollingView: when extra space is added on top, contentView and contentSize are adjusted here to create an illusion of infinite expansion:
+				let delta = self.safeAreaInsets.top + self.contentInset.top + self.contentInset.bottom + self.safeAreaInsets.bottom + self.contentSize.height - self.bounds.height
+				// The below is to ensure that when new content is added on top, the scroller doesn't move visually (though it does in terms of relative coordinates). It gets a bit trickier when the overall size of content is smaller than the visual bounds, hence:
+				self.contentOffset.y += max(0, min(addedHeight, delta))
+				self.contentView.frame.origin.y += addedHeight
+			}
 		case .bottom:
 			break
 		}
@@ -270,7 +273,7 @@ class RollingView: UIScrollView {
 	}
 
 
-	private func addCells(to edge: Edge, cells: [UIView]) -> CGFloat {
+	private func addCells(to edge: Edge, cells: [UIView], animated: Bool) -> CGFloat {
 		var totalHeight: CGFloat = 0
 
 		switch edge {
@@ -292,11 +295,13 @@ class RollingView: UIScrollView {
 					recyclePool.enqueue(cell)
 				}
 				else {
-					newCells.append(Placeholder(cell: cell, addToSuperview: contentView))
+					newCells.append(Placeholder(cell: cell, addToSuperview: contentView, animated: animated))
 				}
 			}
 			placeholders.insert(contentsOf: newCells.reversed(), at: 0)
-			headerView?.frame.origin.y -= totalHeight
+			UIView.animate(withDuration: animated ? Self.ANIMATION_DURATION : 0) {
+				self.headerView?.frame.origin.y -= totalHeight
+			}
 
 		case .bottom:
 			for cell in cells {
@@ -310,10 +315,12 @@ class RollingView: UIScrollView {
 					recyclePool.enqueue(cell)
 				}
 				else {
-					placeholders.append(Placeholder(cell: cell, addToSuperview: contentView))
+					placeholders.append(Placeholder(cell: cell, addToSuperview: contentView, animated: animated))
 				}
 			}
-			footerView?.frame.origin.y += totalHeight
+			UIView.animate(withDuration: animated ? Self.ANIMATION_DURATION : 0) {
+				self.footerView?.frame.origin.y += totalHeight
+			}
 		}
 
 		return totalHeight
@@ -426,12 +433,12 @@ class RollingView: UIScrollView {
 			self.height = height
 		}
 
-		init(cell: UIView, addToSuperview superview: UIView) {
+		init(cell: UIView, addToSuperview superview: UIView, animated: Bool) {
 			self.cell = cell
 			self.cellClass = type(of: cell)
 			self.top = cell.frame.minY
 			self.height = cell.frame.height
-			superview.addSubview(cell)
+			Self.add(cell: cell, to: superview, animated: animated)
 		}
 
 		mutating func attach(cell: UIView, toSuperview superview: UIView) {
@@ -439,7 +446,7 @@ class RollingView: UIScrollView {
 			self.cell = cell
 			cell.frame.origin.y = top
 			cell.frame.size.height = height
-			superview.addSubview(cell)
+			Self.add(cell: cell, to: superview, animated: false)
 		}
 
 		mutating func detach() -> UIView {
@@ -447,6 +454,14 @@ class RollingView: UIScrollView {
 			temp.removeFromSuperview()
 			cell = nil
 			return temp
+		}
+
+		static func add(cell: UIView, to superview: UIView, animated: Bool) {
+			cell.alpha = 0
+			superview.addSubview(cell)
+			UIView.animate(withDuration: animated ? ANIMATION_DURATION : 0) {
+				cell.alpha = 1
+			}
 		}
 	}
 }
