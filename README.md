@@ -23,7 +23,7 @@ And use the following public methods to add content:
 
 The rest of the public methods and properties are documented in the source file [RollingView.swift](https://github.com/crontab/RollingView/blob/master/RollingView/RollingView.swift) .
 
-Take a look at the demo app (load RollingVIew.xcodeproj) to have a better idea on how this works.
+Take a look at the demo app (load RollingView.xcodeproj) to have a better idea on how this works.
 
 ---
 *Author: Hovik Melikyan*

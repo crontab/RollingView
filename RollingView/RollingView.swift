@@ -75,7 +75,7 @@ class RollingView: UIScrollView {
 		reachedEdge = [false, false]
 	}
 
-	/// Returns a cell given a point on screen in RollingVIew's coordinate space.
+	/// Returns a cell given a point on screen in RollingView's coordinate space.
 	func cellFromPoint(_ point: CGPoint) -> UIView? {
 		let point = convert(point, to: contentView)
 		let index = placeholders.binarySearch(top: point.y) - 1
@@ -179,11 +179,13 @@ class RollingView: UIScrollView {
 			validateVisibleRect()
 			if !reachedEdge[Edge.top.rawValue] {
 				let offset = contentOffset.y + contentInset.top + safeAreaInsets.top
-				if offset < frame.height / 2 { // try to load a screenful more cells above the existing content
+				// Try to load more conent if the top of content is half a screen away
+				if offset < frame.height / 2 {
 					self.reachedEdge[Edge.top.rawValue] = true
 					self.tryLoadMore(edge: .top)
 				}
 			}
+			// Also try to load more content at the bottom
 			if !reachedEdge[Edge.bottom.rawValue] && isCloseToBottom(within: frame.height / 2) {
 				self.reachedEdge[Edge.bottom.rawValue] = true
 				self.tryLoadMore(edge: .bottom)
@@ -214,8 +216,6 @@ class RollingView: UIScrollView {
 
 	private static let CONTENT_HEIGHT: CGFloat = 10_000_000
 	private static let MASTER_OFFSET = CONTENT_HEIGHT / 2
-	private static let REFRESH_INDICATOR_TOP_OFFSET: CGFloat = -28
-	private static let REFRESH_INDICATOR_SIZE: CGFloat = 20
 	private static let ANIMATION_DURATION = 0.25
 
 
