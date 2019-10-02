@@ -56,7 +56,6 @@ class RollingView: UIScrollView {
 	/// Tell RollingView that cells should be added either on top or to the bottom of the existing content. Your `rollingView(_:reuseCell:forIndex:)` implementation will be called for each of the added cells.
 	func addCells(edge: Edge, cellClass: UIView.Type, count: Int) {
 		guard count > 0 else {
-			loadingMore = false
 			return
 		}
 		let startIndex = startIndexForEdge(edge, newViewCount: count)
@@ -135,10 +134,9 @@ class RollingView: UIScrollView {
 				return
 			}
 			validateVisibleRect()
-			if !reachedTop && !loadingMore {
+			if !reachedTop {
 				let offset = contentOffset.y + contentInset.top + safeAreaInsets.top
 				if offset < frame.height / 2 { // try to load a screenful more cells above the existing content
-					loadingMore = true
 					self.reachedTop = true
 					self.tryLoadMore(edge: .top)
 				}
@@ -166,7 +164,6 @@ class RollingView: UIScrollView {
 		rollingViewDelegate?.rollingView(self, reached: edge) { (hasMore) in
 			switch edge {
 			case .top:
-				self.loadingMore = false
 				self.reachedTop = !hasMore
 			case .bottom:
 				self.reachedBottom = !hasMore
@@ -187,7 +184,6 @@ class RollingView: UIScrollView {
 		case .bottom:
 			break
 		}
-		loadingMore = false
 	}
 
 
@@ -198,39 +194,14 @@ class RollingView: UIScrollView {
 	private static let REFRESH_INDICATOR_TOP_OFFSET: CGFloat = -28
 	private static let REFRESH_INDICATOR_SIZE: CGFloat = 20
 
-	private var refreshIndicator: UIActivityIndicatorView!
-
 
 	private func setupContentView() {
 		precondition(contentView == nil)
-
 		let view = UIView(frame: CGRect(x: 0, y: -Self.MASTER_OFFSET, width: frame.width, height: Self.CONTENT_HEIGHT))
 		view.autoresizingMask = [.flexibleWidth, .flexibleBottomMargin]
 		view.backgroundColor = backgroundColor
-
-		refreshIndicator = UIActivityIndicatorView(frame: CGRect(
-			x: (view.frame.width - Self.REFRESH_INDICATOR_SIZE) / 2,
-			y: Self.MASTER_OFFSET + Self.REFRESH_INDICATOR_TOP_OFFSET,
-			width: Self.REFRESH_INDICATOR_SIZE,
-			height: Self.REFRESH_INDICATOR_SIZE))
-		refreshIndicator.autoresizingMask = [.flexibleLeftMargin, .flexibleRightMargin]
-		refreshIndicator.style = .gray
-		view.addSubview(refreshIndicator)
-
 		insertSubview(view, at: 0)
 		contentView = view
-	}
-
-
-	private var loadingMore: Bool = false {
-		didSet {
-			if loadingMore {
-				refreshIndicator.startAnimating()
-			}
-			else {
-				refreshIndicator.stopAnimating()
-			}
-		}
 	}
 
 
@@ -313,7 +284,6 @@ class RollingView: UIScrollView {
 			}
 		}
 
-		refreshIndicator.frame.origin.y = contentTop + Self.REFRESH_INDICATOR_TOP_OFFSET
 		return totalHeight
 	}
 
