@@ -68,6 +68,13 @@ class RollingView: UIScrollView {
 		contentDidAddSpace(edge: edge, addedHeight: totalHeight, animated: animated)
 	}
 
+	/// Remove all cells and empty the recycle pool. Header and footer views remain intact.
+	func clear() {
+		clearContent()
+		clearCells()
+		reachedEdge = [false, false]
+	}
+
 	/// Returns a cell given a point on screen in RollingVIew's coordinate space.
 	func cellFromPoint(_ point: CGPoint) -> UIView? {
 		let point = convert(point, to: contentView)
@@ -240,6 +247,17 @@ class RollingView: UIScrollView {
 	}
 
 
+	private func clearContent() {
+		let headerHeight = headerView?.frame.height ?? 0
+		let footerHeight = footerView?.frame.height ?? 0
+		contentSize.height = headerHeight + footerHeight
+		contentOffset.y = -contentInset.top - safeAreaInsets.top
+		contentView.frame.origin.y = -Self.MASTER_OFFSET + headerHeight
+		headerView?.frame.origin.y = Self.MASTER_OFFSET - headerHeight
+		footerView?.frame.origin.y = Self.MASTER_OFFSET
+	}
+
+
 	// MARK: - internal: cell management
 
 	private var recyclePool = CommonPool()
@@ -368,6 +386,18 @@ class RollingView: UIScrollView {
 	}
 
 
+	private func clearCells() {
+		for placeholder in placeholders {
+			placeholder.cell?.removeFromSuperview()
+		}
+		placeholders = []
+		recyclePool.clear()
+		userStartIndex = 0
+		topHotIndex = 0
+		bottomHotIndex = 0
+	}
+
+
 	// MARK: - internal classes
 
 	private class CommonPool {
@@ -390,6 +420,12 @@ class RollingView: UIScrollView {
 			let cell = dict[key]!.dequeueOrCreate()
 			cell.frame.size.width = width
 			return reuseCell(cell, index)
+		}
+
+		func clear() {
+			for key in dict.keys {
+				dict[key]!.array.removeAll()
+			}
 		}
 
 		private struct Pool {
