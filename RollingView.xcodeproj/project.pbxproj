@@ -17,6 +17,7 @@
 		368DC4F323423922000C810B /* LeftChatBubble.xib in Resources */ = {isa = PBXBuildFile; fileRef = 368DC4F223423921000C810B /* LeftChatBubble.xib */; };
 		368DC4F5234239DF000C810B /* ChatBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = 368DC4F4234239DF000C810B /* ChatBubble.swift */; };
 		368DC4F7234241D4000C810B /* RightChatBubble.xib in Resources */ = {isa = PBXBuildFile; fileRef = 368DC4F6234241D4000C810B /* RightChatBubble.xib */; };
+		36DAF5ED2344AA32007AB7B7 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 36DAF5EC2344AA32007AB7B7 /* README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,7 @@
 		368DC4F223423921000C810B /* LeftChatBubble.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = LeftChatBubble.xib; sourceTree = "<group>"; };
 		368DC4F4234239DF000C810B /* ChatBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBubble.swift; sourceTree = "<group>"; };
 		368DC4F6234241D4000C810B /* RightChatBubble.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = RightChatBubble.xib; sourceTree = "<group>"; };
+		36DAF5EC2344AA32007AB7B7 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,6 +50,7 @@
 		3612144822A85B7A000536A0 = {
 			isa = PBXGroup;
 			children = (
+				36DAF5EC2344AA32007AB7B7 /* README.md */,
 				3612145322A85B7A000536A0 /* RollingView */,
 				3612145222A85B7A000536A0 /* Products */,
 			);
@@ -140,6 +143,7 @@
 				368DC4F323423922000C810B /* LeftChatBubble.xib in Resources */,
 				3612146222A85B7C000536A0 /* LaunchScreen.storyboard in Resources */,
 				3612145F22A85B7C000536A0 /* Assets.xcassets in Resources */,
+				36DAF5ED2344AA32007AB7B7 /* README.md in Resources */,
 				3612145A22A85B7A000536A0 /* Main.storyboard in Resources */,
 				368DC4F7234241D4000C810B /* RightChatBubble.xib in Resources */,
 				3612146C22A85ED2000536A0 /* Bukowski.txt in Resources */,

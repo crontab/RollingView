@@ -40,8 +40,8 @@ class MainViewController: UIViewController, RollingViewDelegate {
 		super.viewDidLayoutSubviews()
 		if firstLayout {
 			firstLayout = false
-			rollingView.topInset = topBar.frame.height - view.safeAreaInsets.top + 16
-			rollingView.bottomInset = bottomBar.frame.height + 16
+			rollingView.contentInset.top = topBar.frame.height - view.safeAreaInsets.top + 16
+			rollingView.contentInset.bottom = bottomBar.frame.height + 16
 			rollingView.addCells(edge: .bottom, cellClass: LeftChatBubble.self, count: 1)
 			indexBounds[RollingView.Edge.bottom.rawValue] += 1
 		}
@@ -61,7 +61,11 @@ class MainViewController: UIViewController, RollingViewDelegate {
 		}
 		indexBounds[edge.rawValue] = index
 		let factory = factories[index % 3 == 0 ? 0 : 1]
+		let isCloseToBottom = rollingView.isCloseToBottom
 		rollingView.addCells(edge: edge, cellClass: factory, count: 1)
+		if edge == .bottom && isCloseToBottom {
+			rollingView.scrollToBottom(animated: true)
+		}
 	}
 
 
@@ -84,7 +88,8 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	@IBAction func insetAction(_ sender: Any) {
 		kbShown = !kbShown
 		UIView.animate(withDuration: 0.25) {
-			self.rollingView.bottomInset = self.bottomBar.frame.height + (self.kbShown ? 300 : 0)
+			self.rollingView.contentInset.bottom = self.bottomBar.frame.height + (self.kbShown ? 300 : 0)
+			self.rollingView.scrollToBottom(animated: false)
 		}
 	}
 

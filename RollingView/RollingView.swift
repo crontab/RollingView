@@ -60,6 +60,16 @@ class RollingView: UIScrollView {
 	}
 
 
+	func scrollToBottom(animated: Bool) {
+		self.scrollRectToVisible(CGRect(x: 0, y: self.contentSize.height - 1, width: 1, height: 1), animated: animated)
+	}
+
+
+	var isCloseToBottom: Bool {
+		return (contentSize.height + contentInset.bottom - (contentOffset.y + bounds.height)) < 20
+	}
+
+
 	// MARK: - Protected; scroller
 
 	private var contentView: UIView!
@@ -84,30 +94,6 @@ class RollingView: UIScrollView {
 		if firstLayout {
 			firstLayout = false
 			contentSize.width = frame.width
-		}
-	}
-
-
-	private var safeBoundsHeight: CGFloat {
-		return bounds.height - safeAreaInsets.bottom - safeAreaInsets.top
-	}
-
-
-	var bottomInset: CGFloat {
-		get { return contentInset.bottom }
-		set {
-			layout()
-			contentInset.bottom = newValue
-			self.scrollRectToVisible(CGRect(x: 0, y: self.contentSize.height - 1, width: 1, height: 1), animated: false)
-		}
-	}
-
-
-	var topInset: CGFloat {
-		get { return contentInset.top }
-		set {
-			layout()
-			contentInset.top = newValue
 		}
 	}
 
@@ -160,24 +146,16 @@ class RollingView: UIScrollView {
 
 	private func contentDidAddSpace(edge: Edge, addedHeight: CGFloat) {
 		layout()
-
-		let distanceToBottom = contentSize.height + contentInset.bottom - (contentOffset.y + bounds.height)
 		contentSize.height += addedHeight
-
 		switch edge {
 		case .top:
-			let delta = safeBoundsHeight - contentInset.top - contentInset.bottom - contentSize.height
+			// The magic part of RollingView: when extra space is added on top, contentView and contentSize are adjusted here to create an illusion of infinite expansion:
+			let delta = bounds.height - safeAreaInsets.bottom - safeAreaInsets.top - contentInset.top - contentInset.bottom - contentSize.height
 			contentOffset.y += max(0, min(addedHeight, -delta))
 			contentView.frame.origin.y += addedHeight
-
 		case .bottom:
-			if distanceToBottom < 20 {
-				UIView.transition(with: self, duration: 0.25, options: .curveEaseInOut, animations: {
-					self.scrollRectToVisible(CGRect(x: 0, y: self.contentSize.height - 1, width: 1, height: 1), animated: false)
-				})
-			}
+			break
 		}
-
 		loadingMore = false
 	}
 

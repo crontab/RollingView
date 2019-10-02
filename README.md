@@ -18,6 +18,5 @@ And use the following public methods to add content:
 
 * `register(cellClass:create:)` - register a cell class and its factory method `create()`; this should be called only once per each cell class.
 * `addCells(edge:cellClass:count:)` - add content above or below, given the cell class and a number of cells to add. Your implementation of `rollingView(_:reuseCell:forIndex:)` will be called for setting up actual content in the cells.
-* `var bottomInset: CGFloat` - modify the RollingView's bottom inset: can be used when the keyboard pops up.
 
 Take a look at the demo app (RollingVIew.xcodeproj) to have a better idea on how this works.
