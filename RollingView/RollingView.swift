@@ -14,6 +14,7 @@ protocol RollingViewDelegate: class {
 	/// Set up a cell to be inserted into the RollingView object. This method is called either in response to your call to `addCells(...)` or when a cell is pulled from the recycle pool and needs to be set up for a given index position in the view. The class of the view is the same is when a cell was added using `addCells(...)` at a given position.
 	func rollingView(_ rollingView: RollingView, reuseCell: UIView, forIndex index: Int)
 
+	/// Try to load more data and create cells accordingly, possibly asynchronously. `completion` takes a boolean parameter that indicates whether more attempt should be made for a given `edge` in the future.
 	func rollingView(_ rollingView: RollingView, reached edge: RollingView.Edge, completion: @escaping (_ hasMore: Bool) -> Void)
 }
 
@@ -125,8 +126,7 @@ class RollingView: UIScrollView {
 	}
 
 
-	private var reachedTop: Bool = false
-	private var reachedBottom: Bool = false
+	private var reachedEdge = [false, false]
 
 	override var contentOffset: CGPoint {
 		didSet {
@@ -134,15 +134,15 @@ class RollingView: UIScrollView {
 				return
 			}
 			validateVisibleRect()
-			if !reachedTop {
+			if !reachedEdge[Edge.top.rawValue] {
 				let offset = contentOffset.y + contentInset.top + safeAreaInsets.top
 				if offset < frame.height / 2 { // try to load a screenful more cells above the existing content
-					self.reachedTop = true
+					self.reachedEdge[Edge.top.rawValue] = true
 					self.tryLoadMore(edge: .top)
 				}
 			}
-			if !reachedBottom && isCloseToBottom(within: frame.height / 2) {
-				self.reachedBottom = true
+			if !reachedEdge[Edge.bottom.rawValue] && isCloseToBottom(within: frame.height / 2) {
+				self.reachedEdge[Edge.bottom.rawValue] = true
 				self.tryLoadMore(edge: .bottom)
 			}
 		}
@@ -162,12 +162,7 @@ class RollingView: UIScrollView {
 
 	private func tryLoadMore(edge: Edge) {
 		rollingViewDelegate?.rollingView(self, reached: edge) { (hasMore) in
-			switch edge {
-			case .top:
-				self.reachedTop = !hasMore
-			case .bottom:
-				self.reachedBottom = !hasMore
-			}
+			self.reachedEdge[edge.rawValue] = !hasMore
 		}
 	}
 

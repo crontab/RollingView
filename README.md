@@ -3,7 +3,7 @@
 
 The [RollingView.swift](https://github.com/crontab/RollingView/blob/master/RollingView/RollingView.swift) module is a self-contained module that you can copy into your project. The demo app can be a good starting point for your chat app.
 
-The idea of the infinite scroller is that you can add virtually unlimited number of UIView cells above or below: RollingView will adjust itself accordingly. It can also give you a chance to load more cells above the main content when the user scrolls closer to the top, i.e. load chat history if available.
+The idea of the infinite scroller is that you can add virtually unlimited number of UIView cells above or below: RollingView will adjust itself accordingly. It can also give you a chance to load more cells above or below the main content when the user scrolls closer to the top or the bottom, i.e. load chat history if available.
 
 Similarly to UITableView, RollingView keeps only a limited number of cells in memory at any given time. Cells can be reused at different indices.
 
@@ -12,7 +12,7 @@ Cells can be any UIView, however, keep in mind that all cells added to the scrol
 RollingView is incredibly easy to use: you just need to implement two protocol methods:
 
 * `rollingView(_:reuseCell:forIndex:)` - modify the supplied cell object to be shown at a given index. Note that indices can be negative for content added above.
-* `rollingViewCanAddCellsAbove(_:completion:)` - try to load more (historical) content and call `completion(true)` if you think there may be more content or `completion(false)` if the user reached the end, i.e. this method won't be called again.
+* `rollingView(_:reached:completion:)` - try to load more data and create cells accordingly, possibly asynchronously. `completion` takes a boolean parameter that indicates whether more attempt should be made for a given `edge` in the future.
 
 And use the following public methods to add content:
 
