@@ -9,64 +9,70 @@
 import UIKit
 
 
-protocol RollingViewDelegate: class {
+public protocol RollingViewDelegate: class {
 
 	/// Set up a cell to be inserted into the RollingView object. This method is called either in response to your call to `addCells(...)` or when a cell is pulled from the recycle pool and needs to be set up for a given index position in the view. The class of the view is the same is when a cell was added using `addCells(...)` at a given position.
 	func rollingView(_ rollingView: RollingView, reuseCell: UIView, forIndex index: Int)
 
 	/// Try to load more data and create cells accordingly, possibly asynchronously. `completion` takes a boolean parameter that indicates whether more attempts should be made for a given `edge` in the future. Once `completion` returns false this delegate method will not be called again for a given `edge`. Optional.
 	func rollingView(_ rollingView: RollingView, reached edge: RollingView.Edge, completion: @escaping (_ hasMore: Bool) -> Void)
+
+	/// Cell at `index` has been tapped; optional. No visual changes take place in this case. If `cell` is not nil, it means the cell is visible on screen or is in the "hot" area, so you can make changes in it to reflect the gesture.
+	func rollingView(_ rollingView: RollingView, didSelectCell cell: UIView?, atIndex index: Int)
 }
 
 
-extension RollingViewDelegate {
+public extension RollingViewDelegate {
 	func rollingView(_ rollingView: RollingView, reached edge: RollingView.Edge, completion: @escaping (_ hasMore: Bool) -> Void) {
 		completion(false)
+	}
+
+	func rollingView(_ rollingView: RollingView, didSelectCell: UIView?, atIndex index: Int) {
 	}
 }
 
 
 /// A powerful infinite scroller suitable for e.g. chat apps. With RollingView you can add content in both directions; the class also manages memory in the most efficient way by reusing cells. RollingView can contain horizontal cells of any subclass of UIView. Content in either direction can be added either programmatically or in response to hitting one of the edges of the existing content, i.e. top or bottom.
-class RollingView: UIScrollView {
+open class RollingView: UIScrollView {
 
 	// MARK: - Public
 
-	enum Edge: Int {
+	public enum Edge: Int {
 		case top
 		case bottom
 	}
 
 
 	/// See RollingViewDelegate: you need to implement at least `rollingView(_:reuseCell:forIndex:)`
-	weak var rollingViewDelegate: RollingViewDelegate?
+	public weak var rollingViewDelegate: RollingViewDelegate?
 
 
 	/// Set this if the height of cells is known and fixed; `nil` otherwse. RollingView can be slightly more efficient
-	var fixedCellHeight: CGFloat? {
+	public var fixedCellHeight: CGFloat? {
 		didSet { precondition(fixedCellHeight == nil || fixedCellHeight! >= 1) }
 	}
 
 
 	/// The area that should be kept "hot" in memory expressed in number of screens beyond the visible part. Value of 1 means half a screen above and half a screen below will be kept hot, the rest may be discarded and the cells sent to the recycle pool for further reuse.
-	var hotAreaFactor: CGFloat = 1 {
+	public var hotAreaFactor: CGFloat = 1 {
 		didSet { precondition(hotAreaFactor >= 1) }
 	}
 
 
 	/// Extra cells to keep "warm" in memory in each direction, in addition to the "hot" part. "Warm" means the cells will not be discarded immediately, however neither are they required to be in memory yet like in the hot part. This provides certain inertia in how cells are discarded and reused.
-	var warmCellCount: Int = 10 {
+	public var warmCellCount: Int = 10 {
 		didSet { precondition(warmCellCount >= 2) }
 	}
 
 
 	/// Register a cell class along with its factory method create()
-	func register(cellClass: UIView.Type, create: @escaping () -> UIView) {
+	public func register(cellClass: UIView.Type, create: @escaping () -> UIView) {
 		recyclePool.register(cellClass: cellClass, create: create)
 	}
 
 
 	/// Tell RollingView that cells should be added either on top or to the bottom of the existing content. Your `rollingView(_:reuseCell:forIndex:)` implementation will be called for each of the added cells. Optionally the cell can fade-in animated.
-	func addCells(edge: Edge, cellClass: UIView.Type, count: Int, animated: Bool) {
+	public func addCells(edge: Edge, cellClass: UIView.Type, count: Int, animated: Bool) {
 		guard count > 0 else {
 			return
 		}
@@ -90,38 +96,38 @@ class RollingView: UIScrollView {
 
 
 	/// Remove all cells and empty the recycle pool. Header and footer views remain intact.
-	func clear() {
+	public func clear() {
 		clearContent()
 		clearCells()
 		reachedEdge = [false, false]
 	}
 
 
-	/// Returns a cell given a point on screen in RollingView's coordinate space.
-	func cellFromPoint(_ point: CGPoint) -> UIView? {
+	/// Returns a cell index for given a point on screen in RollingView's coordinate space.
+	public func cellIndexFromPoint(_ point: CGPoint) -> Int? {
 		let point = convert(point, to: contentView)
 		let index = placeholders.binarySearch(top: point.y) - 1
-		if index >= 0 && index < placeholders.count, let cell = placeholders[index].cell, cell.frame.contains(point) {
-			return cell
+		if index >= 0 && index < placeholders.count && placeholders[index].containsPoint(point) {
+			return index
 		}
 		return nil
 	}
 
 
 	/// Scrolls to the bottom of content; useful when new cells appear at the bottom in a chat roll
-	func scrollToBottom(animated: Bool) {
+	public func scrollToBottom(animated: Bool) {
 		self.scrollRectToVisible(CGRect(x: 0, y: self.contentSize.height - 1, width: 1, height: 1), animated: animated)
 	}
 
 
 	/// Checks if the scroller is within 20 points from the bottom; useful when deciding whether the view should be automatically scrolled to the bottom when adding new cells.
-	var isCloseToBottom: Bool {
+	public var isCloseToBottom: Bool {
 		return isCloseToBottom(within: 20)
 	}
 
 
 	/// Header view, similar to UITableView's
-	var headerView: UIView? {
+	public var headerView: UIView? {
 		willSet {
 			if let headerView = headerView {
 				headerView.removeFromSuperview()
@@ -140,7 +146,7 @@ class RollingView: UIScrollView {
 
 
 	/// Footer view, similar to UITableView's
-	var footerView: UIView? {
+	public var footerView: UIView? {
 		willSet {
 			if let footerView = footerView {
 				footerView.removeFromSuperview()
@@ -158,30 +164,30 @@ class RollingView: UIScrollView {
 	}
 
 
-	// MARK: - internal; scroller
+	// MARK: - internal: scroller
 
 	private var contentView: UIView!
 	private var firstLayout = true
 
 
-	override init(frame: CGRect) {
+	public override init(frame: CGRect) {
 		super.init(frame: frame)
-		setupContentView()
+		setup()
 	}
 
 
-	required init?(coder: NSCoder) {
+	public required init?(coder: NSCoder) {
 		super.init(coder: coder)
-		setupContentView()
+		setup()
 	}
 
 
-	override var backgroundColor: UIColor? {
+	open override var backgroundColor: UIColor? {
 		didSet { contentView?.backgroundColor = backgroundColor }
 	}
 
 
-	override func layoutSubviews() {
+	public override func layoutSubviews() {
 		super.layoutSubviews()
 		layout()
 	}
@@ -197,7 +203,7 @@ class RollingView: UIScrollView {
 
 	private var reachedEdge = [false, false]
 
-	override var contentOffset: CGPoint {
+	public override var contentOffset: CGPoint {
 		didSet {
 			guard !firstLayout else {
 				return
@@ -234,6 +240,24 @@ class RollingView: UIScrollView {
 	private func tryLoadMore(edge: Edge) {
 		rollingViewDelegate?.rollingView(self, reached: edge) { (hasMore) in
 			self.reachedEdge[edge.rawValue] = !hasMore
+		}
+	}
+
+
+	// MARK: - internal: gestures
+
+
+	private func setup() {
+		addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(onTap(_:))))
+		setupContentView()
+	}
+
+
+	@objc private func onTap(_ sender: UITapGestureRecognizer) {
+		if sender.state == .ended {
+			if let index = cellIndexFromPoint(sender.location(in: self)) {
+				rollingViewDelegate?.rollingView(self, didSelectCell: placeholders[index].cell, atIndex: index)
+			}
 		}
 	}
 
@@ -561,6 +585,10 @@ class RollingView: UIScrollView {
 			UIView.animate(withDuration: animated ? ANIMATION_DURATION : 0) {
 				cell.alpha = 1
 			}
+		}
+
+		func containsPoint(_ point: CGPoint) -> Bool {
+			return point.y >= top && point.y <= top + height
 		}
 	}
 }
