@@ -42,6 +42,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 		super.viewDidLayoutSubviews()
 		if firstLayout {
 			firstLayout = false
+			// rollingView.fixedCellHeight = 42
 			rollingView.contentInset.top = topBar.frame.height - view.safeAreaInsets.top
 			rollingView.contentInset.bottom = bottomBar.frame.height
 			rollingView.headerView = HeaderView.fromNib()

@@ -36,37 +36,58 @@ class RollingView: UIScrollView {
 		case bottom
 	}
 
+
 	/// See RollingViewDelegate: you need to implement at least `rollingView(_:reuseCell:forIndex:)`
 	weak var rollingViewDelegate: RollingViewDelegate?
+
+
+	/// Set this if the height of cells is known and fixed; `nil` otherwse. RollingView can be slightly more efficient
+	var fixedCellHeight: CGFloat? {
+		didSet { precondition(fixedCellHeight == nil || fixedCellHeight! >= 1) }
+	}
+
 
 	/// The area that should be kept "hot" in memory expressed in number of screens beyond the visible part. Value of 1 means half a screen above and half a screen below will be kept hot, the rest may be discarded and the cells sent to the recycle pool for further reuse.
 	var hotAreaFactor: CGFloat = 1 {
 		didSet { precondition(hotAreaFactor >= 1) }
 	}
 
+
 	/// Extra cells to keep "warm" in memory in each direction, in addition to the "hot" part. "Warm" means the cells will not be discarded immediately, however neither are they required to be in memory yet like in the hot part. This provides certain inertia in how cells are discarded and reused.
 	var warmCellCount: Int = 10 {
 		didSet { precondition(warmCellCount >= 2) }
 	}
+
 
 	/// Register a cell class along with its factory method create()
 	func register(cellClass: UIView.Type, create: @escaping () -> UIView) {
 		recyclePool.register(cellClass: cellClass, create: create)
 	}
 
+
 	/// Tell RollingView that cells should be added either on top or to the bottom of the existing content. Your `rollingView(_:reuseCell:forIndex:)` implementation will be called for each of the added cells. Optionally the cell can fade-in animated.
 	func addCells(edge: Edge, cellClass: UIView.Type, count: Int, animated: Bool) {
 		guard count > 0 else {
 			return
 		}
-		let startIndex = startIndexForEdge(edge, newViewCount: count)
-		let views = (startIndex..<(startIndex + count)).map { (index) -> UIView in
-			return self.recyclePool.dequeue(forIndex: index, cellClass: cellClass, width: contentView.frame.width, reuseCell: reuseCell)
+
+		var totalHeight: CGFloat
+		if fixedCellHeight != nil {
+			totalHeight = addFixedCells(to: edge, cellClass: cellClass, count: count, animated: animated)
+			validateVisibleRect(animated: animated)
 		}
-		let totalHeight = addCells(to: edge, cells: views, animated: animated)
-		validateVisibleRect()
+		else {
+			let startIndex = startIndexForEdge(edge, newViewCount: count)
+			let views = (startIndex..<(startIndex + count)).map { (index) -> UIView in
+				return self.recyclePool.dequeue(forIndex: index, cellClass: cellClass, width: contentView.frame.width, reuseCell: reuseCell)
+			}
+			totalHeight = addCells(to: edge, cells: views, animated: animated)
+			validateVisibleRect(animated: false) // false because this batch of cells will already be animated in addCells()
+		}
+
 		contentDidAddSpace(edge: edge, addedHeight: totalHeight, animated: animated)
 	}
+
 
 	/// Remove all cells and empty the recycle pool. Header and footer views remain intact.
 	func clear() {
@@ -74,6 +95,7 @@ class RollingView: UIScrollView {
 		clearCells()
 		reachedEdge = [false, false]
 	}
+
 
 	/// Returns a cell given a point on screen in RollingView's coordinate space.
 	func cellFromPoint(_ point: CGPoint) -> UIView? {
@@ -85,15 +107,18 @@ class RollingView: UIScrollView {
 		return nil
 	}
 
+
 	/// Scrolls to the bottom of content; useful when new cells appear at the bottom in a chat roll
 	func scrollToBottom(animated: Bool) {
 		self.scrollRectToVisible(CGRect(x: 0, y: self.contentSize.height - 1, width: 1, height: 1), animated: animated)
 	}
 
+
 	/// Checks if the scroller is within 20 points from the bottom; useful when deciding whether the view should be automatically scrolled to the bottom when adding new cells.
 	var isCloseToBottom: Bool {
 		return isCloseToBottom(within: 20)
 	}
+
 
 	/// Header view, similar to UITableView's
 	var headerView: UIView? {
@@ -112,6 +137,7 @@ class RollingView: UIScrollView {
 			}
 		}
 	}
+
 
 	/// Footer view, similar to UITableView's
 	var footerView: UIView? {
@@ -132,7 +158,7 @@ class RollingView: UIScrollView {
 	}
 
 
-	// MARK: - Protected; scroller
+	// MARK: - internal; scroller
 
 	private var contentView: UIView!
 	private var firstLayout = true
@@ -176,7 +202,7 @@ class RollingView: UIScrollView {
 			guard !firstLayout else {
 				return
 			}
-			validateVisibleRect()
+			validateVisibleRect(animated: false)
 			if !reachedEdge[Edge.top.rawValue] {
 				let offset = contentOffset.y + contentInset.top + safeAreaInsets.top
 				// Try to load more conent if the top of content is half a screen away
@@ -291,6 +317,41 @@ class RollingView: UIScrollView {
 	}
 
 
+	private func addFixedCells(to edge: Edge, cellClass: UIView.Type, count: Int, animated: Bool) -> CGFloat {
+		guard let fixedCellHeight = fixedCellHeight else {
+			preconditionFailure()
+		}
+
+		let totalHeight: CGFloat = fixedCellHeight * CGFloat(count)
+
+		switch edge {
+
+		case .top:
+			userStartIndex -= count
+			var newCells: [Placeholder] = []
+			var top: CGFloat = contentTop - totalHeight
+			for _ in 0..<count {
+				newCells.append(Placeholder(cellClass: cellClass, top: top, height: fixedCellHeight))
+				top += fixedCellHeight
+			}
+			placeholders.insert(contentsOf: newCells, at: 0)
+			UIView.animate(withDuration: animated ? Self.ANIMATION_DURATION : 0) {
+				self.headerView?.frame.origin.y -= totalHeight
+			}
+
+		case .bottom:
+			for _ in 0..<count {
+				placeholders.append(Placeholder(cellClass: cellClass, top: contentBottom, height: fixedCellHeight))
+			}
+			UIView.animate(withDuration: animated ? Self.ANIMATION_DURATION : 0) {
+				self.footerView?.frame.origin.y += totalHeight
+			}
+		}
+
+		return totalHeight
+	}
+
+
 	private func addCells(to edge: Edge, cells: [UIView], animated: Bool) -> CGFloat {
 		var totalHeight: CGFloat = 0
 
@@ -307,10 +368,11 @@ class RollingView: UIScrollView {
 				totalHeight += cellHeight
 				cell.frame.origin.y = top
 
-				// If the hot window is not at the top, then add a placeholder and send the cell to the recycling pool
+				// If the hot window is not at the top, then add a placeholder and discard the cell
 				if topHotIndex > 0 {
 					newCells.append(Placeholder(cellClass: type(of: cell), top: top, height: cellHeight))
-					recyclePool.enqueue(cell)
+					// recyclePool.enqueue(cell)
+					RLOG("RollingView: discarding unused cell")
 				}
 				else {
 					newCells.append(Placeholder(cell: cell, addToSuperview: contentView, animated: animated))
@@ -327,10 +389,11 @@ class RollingView: UIScrollView {
 				totalHeight += cellHeight
 				cell.frame.origin.y = contentBottom
 
-				// If this is beyond our hot area, then add a placeholder and send the cell to the recycling pool
+				// If this is beyond our hot area, then add a placeholder and and discard the cell
 				if bottomHotIndex < placeholders.count - 1 {
 					placeholders.append(Placeholder(cellClass: type(of: cell), top: contentBottom, height: cellHeight))
-					recyclePool.enqueue(cell)
+					// recyclePool.enqueue(cell)
+					RLOG("RollingView: discarding unused cell")
 				}
 				else {
 					placeholders.append(Placeholder(cell: cell, addToSuperview: contentView, animated: animated))
@@ -345,7 +408,7 @@ class RollingView: UIScrollView {
 	}
 
 
-	private func validateVisibleRect() {
+	private func validateVisibleRect(animated: Bool) {
 		guard let contentView = contentView, rollingViewDelegate != nil, !placeholders.isEmpty else {
 			return
 		}
@@ -362,7 +425,7 @@ class RollingView: UIScrollView {
 		repeat {
 			if placeholders[index].cell == nil {
 				let cell = recyclePool.dequeue(forIndex: index + userStartIndex, cellClass: placeholders[index].cellClass, width: contentView.frame.width, reuseCell: reuseCell)
-				placeholders[index].attach(cell: cell, toSuperview: contentView)
+				placeholders[index].attach(cell: cell, toSuperview: contentView, animated: animated)
 			}
 			index += 1
 		} while index < placeholders.count && placeholders[index].bottom < hotRect.maxY
@@ -477,12 +540,12 @@ class RollingView: UIScrollView {
 			Self.add(cell: cell, to: superview, animated: animated)
 		}
 
-		mutating func attach(cell: UIView, toSuperview superview: UIView) {
+		mutating func attach(cell: UIView, toSuperview superview: UIView, animated: Bool) {
 			precondition(self.cell == nil)
 			self.cell = cell
 			cell.frame.origin.y = top
 			cell.frame.size.height = height
-			Self.add(cell: cell, to: superview, animated: false)
+			Self.add(cell: cell, to: superview, animated: animated)
 		}
 
 		mutating func detach() -> UIView {
