@@ -105,7 +105,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 	@IBAction func tapAction(_ sender: UITapGestureRecognizer) {
 		let point = sender.location(in: rollingView)
-		print((rollingView.cellFromPoint(point) as? ChatBubble)?.text ?? "?")
+		print(rollingView.cellIndexFromPoint(point) ?? 0)
 	}
 
 }

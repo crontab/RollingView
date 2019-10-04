@@ -103,6 +103,22 @@ open class RollingView: UIScrollView {
 	}
 
 
+	/// Tell RollingView to call your delegate method `rollingView(_:reuseCell:forIndex:)` for each of the cells that are kept in the "hot" area, i.e. close or inside the visible area; this is similar to UITableView's `reloadData()`
+	public func refreshHotCells() {
+		for index in topHotIndex...bottomHotIndex {
+			reloadCell(atIndex: index)
+		}
+	}
+
+
+	/// Tell RollingView to call your delegate method `rollingView(_:reuseCell:forIndex:)` on the cell at `index` if it's "hot", i.e. close or inside the visible area
+	public func reloadCell(atIndex index: Int) {
+		if let cell = placeholders[index].cell {
+			rollingViewDelegate?.rollingView(self, reuseCell: cell, forIndex: index)
+		}
+	}
+
+
 	/// Returns a cell index for given a point on screen in RollingView's coordinate space.
 	public func cellIndexFromPoint(_ point: CGPoint) -> Int? {
 		let point = convert(point, to: contentView)
