@@ -136,6 +136,12 @@ open class RollingView: UIScrollView {
 	}
 
 
+	/// Scrolls to the top of content
+	public func scrollToTop(animated: Bool) {
+		self.scrollRectToVisible(CGRect(x: 0, y: 0, width: 1, height: 1), animated: animated)
+	}
+
+
 	/// Checks if the scroller is within 20 points from the bottom; useful when deciding whether the view should be automatically scrolled to the bottom when adding new cells.
 	public var isCloseToBottom: Bool {
 		return isCloseToBottom(within: 20)
