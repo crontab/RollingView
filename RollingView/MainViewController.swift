@@ -92,6 +92,11 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	}
 
 
+	func rollingView(_ rollingView: RollingView, didSelectCell cell: UIView?, atIndex index: Int) {
+		print(index, (cell as? ChatBubble)?.text ?? "<not in memory>")
+	}
+
+
 	private var kbShown = false
 
 	@IBAction func insetAction(_ sender: Any) {

@@ -83,9 +83,9 @@ open class RollingView: UIScrollView {
 			validateVisibleRect(animated: animated)
 		}
 		else {
-			let startIndex = startIndexForEdge(edge, newViewCount: count)
-			let views = (startIndex..<(startIndex + count)).map { (index) -> UIView in
-				return self.recyclePool.dequeue(forIndex: index, cellClass: cellClass, width: contentView.frame.width, reuseCell: reuseCell)
+			let startUserIndex = startUserIndexForEdge(edge, newViewCount: count)
+			let views = (startUserIndex..<(startUserIndex + count)).map { (index) -> UIView in
+				return self.recyclePool.dequeue(forUserIndex: index, cellClass: cellClass, width: contentView.frame.width, reuseCell: reuseCell)
 			}
 			totalHeight = addCells(to: edge, cells: views, animated: animated)
 			validateVisibleRect(animated: false) // false because this batch of cells will already be animated in addCells()
@@ -106,14 +106,14 @@ open class RollingView: UIScrollView {
 	/// Tell RollingView to call your delegate method `rollingView(_:reuseCell:forIndex:)` for each of the cells that are kept in the "hot" area, i.e. close or inside the visible area; this is similar to UITableView's `reloadData()`
 	public func refreshHotCells() {
 		for index in topHotIndex...bottomHotIndex {
-			reloadCell(atIndex: index)
+			reloadCell(at: index + userIndexOffset)
 		}
 	}
 
 
 	/// Tell RollingView to call your delegate method `rollingView(_:reuseCell:forIndex:)` on the cell at `index` if it's "hot", i.e. close or inside the visible area
-	public func reloadCell(atIndex index: Int) {
-		if let cell = placeholders[index].cell {
+	public func reloadCell(at index: Int) {
+		if let cell = placeholders[index - userIndexOffset].cell {
 			rollingViewDelegate?.rollingView(self, reuseCell: cell, forIndex: index)
 		}
 	}
@@ -124,9 +124,17 @@ open class RollingView: UIScrollView {
 		let point = convert(point, to: contentView)
 		let index = placeholders.binarySearch(top: point.y) - 1
 		if index >= 0 && index < placeholders.count && placeholders[index].containsPoint(point) {
-			return index
+			return index + userIndexOffset
 		}
 		return nil
+	}
+
+
+	/// Returns a frame of a given cell index in RollingView's coordinates.
+	public func frameOfCell(at index: Int) -> CGRect {
+		let placeholder = placeholders[index - userIndexOffset]
+		let origin = convert(CGPoint(x: contentView.frame.origin.x, y: placeholder.top), from: contentView)
+		return CGRect(x: origin.x, y: origin.y, width: contentView.frame.width, height: placeholder.height)
 	}
 
 
@@ -248,7 +256,7 @@ open class RollingView: UIScrollView {
 	}
 
 
-	private func reuseCell(_ reuseCell: UIView, forIndex index: Int) -> UIView {
+	private func reuseCell(_ reuseCell: UIView, forUserIndex index: Int) -> UIView {
 		rollingViewDelegate!.rollingView(self, reuseCell: reuseCell, forIndex: index)
 		return reuseCell
 	}
@@ -277,8 +285,8 @@ open class RollingView: UIScrollView {
 
 	@objc private func onTap(_ sender: UITapGestureRecognizer) {
 		if sender.state == .ended {
-			if let index = cellIndexFromPoint(sender.location(in: self)) {
-				rollingViewDelegate?.rollingView(self, didSelectCell: placeholders[index].cell, atIndex: index)
+			if let userIndex = cellIndexFromPoint(sender.location(in: self)) {
+				rollingViewDelegate?.rollingView(self, didSelectCell: placeholders[userIndex - userIndexOffset].cell, atIndex: userIndex)
 			}
 		}
 	}
@@ -336,7 +344,7 @@ open class RollingView: UIScrollView {
 	private var placeholders: [Placeholder] = []	// ordered by the `y` coordinate so that binarySearch() can be used on it
 
 	// Always negative or 0; from the user's perspective the cells added to the top have negative indices
-	private var userStartIndex = 0
+	private var userIndexOffset = 0
 
 	// Our "hot" area calculated in validateVisibleRect()
 	private var topHotIndex = 0
@@ -353,12 +361,12 @@ open class RollingView: UIScrollView {
 	}
 
 
-	private func startIndexForEdge(_ edge: Edge, newViewCount count: Int) -> Int {
+	private func startUserIndexForEdge(_ edge: Edge, newViewCount count: Int) -> Int {
 		switch edge {
 		case .top:
-			return userStartIndex - count
+			return userIndexOffset - count
 		case .bottom:
-			return userStartIndex + placeholders.count
+			return userIndexOffset + placeholders.count
 		}
 	}
 
@@ -373,7 +381,7 @@ open class RollingView: UIScrollView {
 		switch edge {
 
 		case .top:
-			userStartIndex -= count
+			userIndexOffset -= count
 			var newCells: [Placeholder] = []
 			var top: CGFloat = contentTop - totalHeight
 			for _ in 0..<count {
@@ -404,7 +412,7 @@ open class RollingView: UIScrollView {
 		switch edge {
 
 		case .top:
-			userStartIndex -= cells.count
+			userIndexOffset -= cells.count
 			// We add the new cells reversed to the local temp array first, then insert into the global one in reverse order again; this way it's easier to calculate the coordinates
 			var newCells: [Placeholder] = []
 			var top: CGFloat = contentTop
@@ -470,7 +478,7 @@ open class RollingView: UIScrollView {
 		var index = topHotIndex
 		repeat {
 			if placeholders[index].cell == nil {
-				let cell = recyclePool.dequeue(forIndex: index + userStartIndex, cellClass: placeholders[index].cellClass, width: contentView.frame.width, reuseCell: reuseCell)
+				let cell = recyclePool.dequeue(forUserIndex: index + userIndexOffset, cellClass: placeholders[index].cellClass, width: contentView.frame.width, reuseCell: reuseCell)
 				placeholders[index].attach(cell: cell, toSuperview: contentView, animated: animated)
 			}
 			index += 1
@@ -489,7 +497,7 @@ open class RollingView: UIScrollView {
 		while index < placeholders.count && placeholders[index].cell != nil {
 			let detachedCell = placeholders[index].detach()
 			recyclePool.enqueue(detachedCell)
-			RLOG("RollingView: discarding at \(index + userStartIndex)")
+			RLOG("RollingView: discarding at \(index + userIndexOffset)")
 			index += 1
 		}
 	}
@@ -501,7 +509,7 @@ open class RollingView: UIScrollView {
 		}
 		placeholders = []
 		recyclePool.clear()
-		userStartIndex = 0
+		userIndexOffset = 0
 		topHotIndex = 0
 		bottomHotIndex = 0
 	}
@@ -523,7 +531,7 @@ open class RollingView: UIScrollView {
 			dict[key]!.enqueue(element)
 		}
 
-		func dequeue(forIndex index: Int, cellClass: UIView.Type, width: CGFloat, reuseCell: (UIView, Int) -> UIView) -> UIView {
+		func dequeue(forUserIndex index: Int, cellClass: UIView.Type, width: CGFloat, reuseCell: (UIView, Int) -> UIView) -> UIView {
 			let key = ObjectIdentifier(cellClass)
 			precondition(dict[key] != nil, "RollingView cell class \(cellClass) not registered")
 			let cell = dict[key]!.dequeueOrCreate()
