@@ -100,6 +100,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 	private var kbShown = false
 
 	@IBAction func insetAction(_ sender: Any) {
+//		rollingView.insertCells(at: 0, cellClass: factoryForEdge(.top), count: 1, animated: true)
 		kbShown = !kbShown
 		UIView.animate(withDuration: 0.25) {
 			self.rollingView.contentInset.bottom = self.bottomBar.frame.height + (self.kbShown ? 300 : 0)
