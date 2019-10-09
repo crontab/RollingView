@@ -74,6 +74,9 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 	func rollingView(_ rollingView: RollingView, reuseCell: UIView, forIndex index: Int) {
 		(reuseCell as! ChatBubble).text = "\(index). " + lines[abs(index) % lines.count]
+//		if index == 0 {
+//			reuseCell.frame.size.height = CGFloat(Int.random(in: 40...100))
+//		}
 	}
 
 
@@ -101,6 +104,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 	@IBAction func insetAction(_ sender: Any) {
 //		rollingView.insertCells(at: 0, cellClass: factoryForEdge(.top), count: 1, animated: true)
+//		rollingView.updateCell(at: 0, cellClass: LeftChatBubble.self, animated: true)
 		kbShown = !kbShown
 		UIView.animate(withDuration: 0.25) {
 			self.rollingView.contentInset.bottom = self.bottomBar.frame.height + (self.kbShown ? 300 : 0)

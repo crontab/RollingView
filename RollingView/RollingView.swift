@@ -107,6 +107,16 @@ open class RollingView: UIScrollView {
 	}
 
 
+	public func updateCell(at index: Int, cellClass: UIView.Type, animated: Bool) {
+		let internalIndex = index - userIndexOffset
+		if let detachedCell = placeholders[internalIndex].detach() {
+			recyclePool.enqueue(detachedCell)
+		}
+		let newCell = recyclePool.dequeue(forUserIndex: index, cellClass: cellClass, width: contentView.frame.width, reuseCell: reuseCell)
+		updateCell(at: internalIndex, cell: newCell, animated: animated)
+	}
+
+
 	/// Remove all cells and empty the recycle pool. Header and footer views remain intact.
 	public func clear() {
 		clearContent()
@@ -184,7 +194,6 @@ open class RollingView: UIScrollView {
 		}
 		didSet {
 			if let headerView = headerView {
-				headerView.frame.origin.y = contentTop - headerView.frame.height
 				headerView.frame.size.width = frame.width
 				contentView.addSubview(headerView)
 				contentDidAddSpace(edge: .top, addedHeight: headerView.frame.height, animated: false)
@@ -203,7 +212,6 @@ open class RollingView: UIScrollView {
 		}
 		didSet {
 			if let footerView = footerView {
-				footerView.frame.origin.y = contentBottom
 				footerView.frame.size.width = frame.width
 				contentView.addSubview(footerView)
 				contentDidAddSpace(edge: .bottom, addedHeight: footerView.frame.height, animated: false)
@@ -333,6 +341,7 @@ open class RollingView: UIScrollView {
 		switch edge {
 		case .top:
 			UIView.animate(withDuration: animated ? Self.ANIMATION_DURATION : 0) {
+				self.headerView?.frame.origin.y = self.contentTop - (self.headerView?.frame.height ?? 0)
 				// The magic part of RollingView: when extra space is added on top, contentView and contentSize are adjusted here to create an illusion of infinite expansion:
 				let delta = self.safeAreaInsets.top + self.contentInset.top + self.contentInset.bottom + self.safeAreaInsets.bottom + self.contentSize.height - self.bounds.height
 				// The below is to ensure that when new content is added on top, the scroller doesn't move visually (though it does in terms of relative coordinates). It gets a bit trickier when the overall size of content is smaller than the visual bounds, hence:
@@ -340,6 +349,9 @@ open class RollingView: UIScrollView {
 				self.contentView.frame.origin.y += addedHeight
 			}
 		case .bottom:
+			UIView.animate(withDuration: animated ? Self.ANIMATION_DURATION : 0) {
+				self.footerView?.frame.origin.y = self.contentBottom
+			}
 			break
 		}
 	}
@@ -407,16 +419,10 @@ open class RollingView: UIScrollView {
 				top += fixedCellHeight
 			}
 			placeholders.insert(contentsOf: newCells, at: 0)
-			UIView.animate(withDuration: animated ? Self.ANIMATION_DURATION : 0) {
-				self.headerView?.frame.origin.y -= totalHeight
-			}
 
 		case .bottom:
 			for _ in 0..<count {
 				placeholders.append(Placeholder(cellClass: cellClass, top: contentBottom, height: fixedCellHeight))
-			}
-			UIView.animate(withDuration: animated ? Self.ANIMATION_DURATION : 0) {
-				self.footerView?.frame.origin.y += totalHeight
 			}
 		}
 
@@ -451,9 +457,6 @@ open class RollingView: UIScrollView {
 				}
 			}
 			placeholders.insert(contentsOf: newCells.reversed(), at: 0)
-			UIView.animate(withDuration: animated ? Self.ANIMATION_DURATION : 0) {
-				self.headerView?.frame.origin.y -= totalHeight
-			}
 
 		case .bottom:
 			for cell in cells {
@@ -469,9 +472,6 @@ open class RollingView: UIScrollView {
 				else {
 					placeholders.append(Placeholder(cell: cell, addToSuperview: contentView, animated: animated))
 				}
-			}
-			UIView.animate(withDuration: animated ? Self.ANIMATION_DURATION : 0) {
-				self.footerView?.frame.origin.y += totalHeight
 			}
 		}
 
@@ -493,11 +493,8 @@ open class RollingView: UIScrollView {
 			i += 1
 		}
 		while i < placeholders.count {
-			placeholders[i].moveBy(totalHeight, animated: true)
+			placeholders[i].moveBy(totalHeight, animated: animated)
 			i += 1
-		}
-		UIView.animate(withDuration: animated ? Self.ANIMATION_DURATION : 0) {
-			self.footerView?.frame.origin.y += totalHeight
 		}
 		validateVisibleRect(animated: animated)
 		contentDidAddSpace(edge: .bottom, addedHeight: totalHeight, animated: animated)
@@ -522,15 +519,33 @@ open class RollingView: UIScrollView {
 			i += 1
 		}
 		while i < placeholders.count {
-			placeholders[i].moveBy(totalHeight, animated: true)
+			placeholders[i].moveBy(totalHeight, animated: animated)
 			i += 1
-		}
-		UIView.animate(withDuration: animated ? Self.ANIMATION_DURATION : 0) {
-			self.footerView?.frame.origin.y += totalHeight
 		}
 		validateVisibleRect(animated: false) // false because this batch of cells will already be animated in addCells()
 		contentDidAddSpace(edge: .bottom, addedHeight: totalHeight, animated: animated)
 	}
+
+
+
+	private func updateCell(at index: Int, cell: UIView, animated: Bool) {
+		let delta = cell.frame.height - placeholders[index].height
+		if delta != 0 {
+			placeholders[index].height = cell.frame.height
+			for i in (index + 1)..<placeholders.count {
+				placeholders[i].moveBy(delta, animated: animated)
+			}
+		}
+		precondition(placeholders[index].cell == nil)
+		let cellClass = type(of: cell)
+		if cellClass != placeholders[index].cellClass {
+			placeholders[index].cellClass = cellClass
+		}
+		recyclePool.enqueue(cell)
+		validateVisibleRect(animated: animated)
+		contentDidAddSpace(edge: .bottom, addedHeight: delta, animated: animated)
+	}
+
 
 
 	private func validateVisibleRect(animated: Bool) {
@@ -558,15 +573,13 @@ open class RollingView: UIScrollView {
 
 		// Expand the hot area by warmCellCount more cells in both directions; everything beyond that can be freed:
 		index = topHotIndex - warmCellCount / 2
-		while index >= 0 && placeholders[index].cell != nil {
-			let detachedCell = placeholders[index].detach()
+		while index >= 0, let detachedCell = placeholders[index].detach() {
 			recyclePool.enqueue(detachedCell)
 			index -= 1
 		}
 
 		index = bottomHotIndex + warmCellCount / 2
-		while index < placeholders.count && placeholders[index].cell != nil {
-			let detachedCell = placeholders[index].detach()
+		while index < placeholders.count, let detachedCell = placeholders[index].detach() {
 			recyclePool.enqueue(detachedCell)
 			RLOG("RollingView: discarding at \(index + userIndexOffset)")
 			index += 1
@@ -621,13 +634,13 @@ open class RollingView: UIScrollView {
 			var array: [UIView] = []
 
 			mutating func enqueue(_ element: UIView) {
-				RLOG("RollingView: recycling cell, pool: \(array.count)")
 				array.append(element)
+				RLOG("RollingView: recycling cell, pool: \(array.count)")
 			}
 
 			mutating func dequeueOrCreate() -> UIView {
 				if !array.isEmpty {
-					RLOG("RollingView: reusing cell, pool: \(array.count)")
+					RLOG("RollingView: reusing cell, pool: \(array.count - 1)")
 					return array.removeLast()
 				}
 				else {
@@ -673,9 +686,9 @@ open class RollingView: UIScrollView {
 			Self.add(cell: cell, to: superview, animated: animated)
 		}
 
-		mutating func detach() -> UIView {
-			let temp = cell!
-			temp.removeFromSuperview()
+		mutating func detach() -> UIView? {
+			let temp = cell
+			temp?.removeFromSuperview()
 			cell = nil
 			return temp
 		}
