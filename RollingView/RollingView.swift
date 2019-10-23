@@ -329,7 +329,6 @@ open class RollingView: UIScrollView {
 		precondition(contentView == nil)
 		let view = UIView(frame: CGRect(x: 0, y: -Self.MASTER_OFFSET, width: frame.width, height: Self.CONTENT_HEIGHT))
 		view.autoresizingMask = [.flexibleWidth, .flexibleBottomMargin]
-		view.backgroundColor = backgroundColor
 		insertSubview(view, at: 0)
 		contentView = view
 	}
