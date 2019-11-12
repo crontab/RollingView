@@ -117,6 +117,12 @@ open class RollingView: UIScrollView {
 	}
 
 
+	/// Return a cell view at given index if it's "warm" in memory, or nil otherwise
+	public func cellAt(_ index: Int) -> UIView? {
+		return placeholders[index - userIndexOffset].cell
+	}
+
+
 	/// Remove all cells and empty the recycle pool. Header and footer views remain intact.
 	public func clear() {
 		clearContent()
@@ -136,7 +142,7 @@ open class RollingView: UIScrollView {
 	/// Tell RollingView to call your delegate method `rollingView(_:reuseCell:forIndex:)` on the cell at `index` if it's "hot", i.e. close or inside the visible area
 	public func reloadCell(at index: Int) {
 		if let cell = placeholders[index - userIndexOffset].cell {
-			rollingViewDelegate?.rollingView(self, reuseCell: cell, forIndex: index)
+			reuseCell(cell, forUserIndex: index)
 		}
 	}
 
@@ -174,7 +180,14 @@ open class RollingView: UIScrollView {
 
 	/// Scrolls to the cell by its index
 	public func scrollToCellIndex(_ index: Int, animated: Bool) {
-		scrollRectToVisible(frameOfCell(at: index), animated: animated)
+		// We allow scrolling to index 0 if there are no cells; useful when there's a header and we still want to scroll to the top of content
+		if index == 0 && placeholders.isEmpty {
+			let origin = convert(CGPoint(x: 0, y: contentTop), from: contentView)
+			scrollRectToVisible(CGRect(x: 0, y: origin.y, width: 1, height: 1), animated: animated)
+		}
+		else {
+			scrollRectToVisible(frameOfCell(at: index), animated: animated)
+		}
 	}
 
 
@@ -282,8 +295,10 @@ open class RollingView: UIScrollView {
 	}
 
 
+	@discardableResult
 	private func reuseCell(_ reuseCell: UIView, forUserIndex index: Int) -> UIView {
-		rollingViewDelegate!.rollingView(self, reuseCell: reuseCell, forIndex: index)
+		rollingViewDelegate?.rollingView(self, reuseCell: reuseCell, forIndex: index)
+		reuseCell.layoutIfNeeded()
 		return reuseCell
 	}
 
@@ -693,10 +708,13 @@ open class RollingView: UIScrollView {
 		}
 
 		static func add(cell: UIView, to superview: UIView, animated: Bool) {
-			cell.alpha = 0
 			superview.addSubview(cell)
-			UIView.animate(withDuration: animated ? ANIMATION_DURATION : 0) {
-				cell.alpha = 1
+			if animated {
+				let originalAlpha = cell.alpha
+				cell.alpha = 0
+				UIView.animate(withDuration: ANIMATION_DURATION) {
+					cell.alpha = originalAlpha
+				}
 			}
 		}
 
@@ -736,8 +754,8 @@ private extension Array where Element == RollingView.Placeholder {
 
 
 #if DEBUG && DEBUG_ROLLING_VIEW
-	private func RLOG(_ s: String) { print(s) }
+private func RLOG(_ s: String) { print(s) }
 #else
-	private func RLOG(_ s: String) { }
+private func RLOG(_ s: String) { }
 #endif
 
