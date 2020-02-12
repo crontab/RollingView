@@ -20,21 +20,17 @@ public protocol RollingViewDelegate: class {
 	/// Cell at `index` has been tapped; optional. No visual changes take place in this case. If `cell` is not nil, it means the cell is visible on screen or is in the "hot" area, so you can make changes in it to reflect the gesture.
 	func rollingView(_ rollingView: RollingView, didSelectCell cell: UIView?, atIndex index: Int)
 
-	///
+	/// UIScrollView.contentOffset change event
 	func rollingView(_ rollingView: RollingView, didScrollTo offset: CGPoint)
 }
 
 
 public extension RollingViewDelegate {
-	func rollingView(_ rollingView: RollingView, reached edge: RollingView.Edge, completion: @escaping (_ hasMore: Bool) -> Void) {
-		completion(false)
-	}
+	func rollingView(_ rollingView: RollingView, reached edge: RollingView.Edge, completion: @escaping (_ hasMore: Bool) -> Void) { completion(false) }
 
-	func rollingView(_ rollingView: RollingView, didSelectCell: UIView?, atIndex index: Int) {
-	}
+	func rollingView(_ rollingView: RollingView, didSelectCell: UIView?, atIndex index: Int) { }
 
-	func rollingView(_ rollingView: RollingView, didScrollTo offset: CGPoint) {
-	}
+	func rollingView(_ rollingView: RollingView, didScrollTo offset: CGPoint) { }
 }
 
 
@@ -243,7 +239,6 @@ open class RollingView: UIScrollView {
 	// MARK: - internal: scroller
 
 	private var contentView: UIView!
-	private var firstLayout = true
 
 
 	public override init(frame: CGRect) {
@@ -263,27 +258,10 @@ open class RollingView: UIScrollView {
 	}
 
 
-	public override func layoutSubviews() {
-		super.layoutSubviews()
-		layout()
-	}
-
-
-	private func layout() {
-		if firstLayout {
-			firstLayout = false
-			contentSize.width = frame.width
-		}
-	}
-
-
 	private var reachedEdge = [false, false]
 
 	public override var contentOffset: CGPoint {
 		didSet {
-			guard !firstLayout else {
-				return
-			}
 			validateVisibleRect(animated: false)
 			if !reachedEdge[Edge.top.rawValue] {
 				let offset = contentOffset.y + contentInset.top + safeAreaInsets.top
@@ -359,7 +337,7 @@ open class RollingView: UIScrollView {
 
 
 	private func contentDidAddSpace(edge: Edge, addedHeight: CGFloat, animated: Bool) {
-		layout()
+		contentSize.width = frame.width
 		contentSize.height += addedHeight
 		switch edge {
 		case .top:
