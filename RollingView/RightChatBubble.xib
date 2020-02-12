@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="15400" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="15705" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" colorMatched="YES">
     <device id="retina4_0" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="15404"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="15706"/>
         <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -15,14 +15,14 @@
         </placeholder>
         <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
         <view clipsSubviews="YES" contentMode="scaleToFill" id="iN0-l3-epB" customClass="RightChatBubble" customModule="RollingView" customModuleProvider="target">
-            <rect key="frame" x="0.0" y="0.0" width="320" height="42"/>
+            <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
             <subviews>
                 <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Y9l-b7-LgP">
-                    <rect key="frame" x="239.5" y="2" width="70.5" height="38"/>
+                    <rect key="frame" x="239.5" y="2" width="70.5" height="40"/>
                     <subviews>
                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="wordWrap" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Pud-4i-rYh">
-                            <rect key="frame" x="15" y="9" width="40.5" height="19.5"/>
+                            <rect key="frame" x="15" y="8" width="40.5" height="24"/>
                             <fontDescription key="fontDescription" type="system" weight="medium" pointSize="16"/>
                             <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             <nil key="highlightedColor"/>
@@ -30,16 +30,18 @@
                     </subviews>
                     <color key="backgroundColor" name="ELBlue"/>
                     <constraints>
-                        <constraint firstAttribute="bottom" secondItem="Pud-4i-rYh" secondAttribute="bottom" constant="9.5" id="DAO-mG-cpA"/>
+                        <constraint firstAttribute="bottom" secondItem="Pud-4i-rYh" secondAttribute="bottom" constant="8" id="DAO-mG-cpA"/>
                         <constraint firstItem="Pud-4i-rYh" firstAttribute="leading" secondItem="Y9l-b7-LgP" secondAttribute="leading" constant="15" id="OSW-Qs-kUv"/>
-                        <constraint firstItem="Pud-4i-rYh" firstAttribute="top" secondItem="Y9l-b7-LgP" secondAttribute="top" constant="9" id="RtR-UG-Hjj"/>
+                        <constraint firstItem="Pud-4i-rYh" firstAttribute="top" secondItem="Y9l-b7-LgP" secondAttribute="top" constant="8" id="RtR-UG-Hjj"/>
+                        <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="40" id="aPl-qb-VB6"/>
                         <constraint firstAttribute="trailing" secondItem="Pud-4i-rYh" secondAttribute="trailing" constant="15" id="inM-4G-a45"/>
                     </constraints>
                 </view>
             </subviews>
             <constraints>
+                <constraint firstAttribute="bottom" secondItem="Y9l-b7-LgP" secondAttribute="bottom" constant="2" id="S9k-n4-6kV"/>
                 <constraint firstAttribute="trailing" secondItem="Y9l-b7-LgP" secondAttribute="trailing" constant="10" id="fmi-sc-r2k"/>
-                <constraint firstItem="Y9l-b7-LgP" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="iN0-l3-epB" secondAttribute="leading" constant="100" id="uiC-PM-Og1"/>
+                <constraint firstItem="Y9l-b7-LgP" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="iN0-l3-epB" secondAttribute="leading" constant="60" id="uiC-PM-Og1"/>
                 <constraint firstItem="Y9l-b7-LgP" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="2" id="ykh-NO-mkW"/>
             </constraints>
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>

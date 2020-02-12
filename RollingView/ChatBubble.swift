@@ -22,11 +22,7 @@ class ChatBubble: UIView {
 
 	var text: String {
 		get { return textLabel.text ?? "" }
-		set {
-			textLabel.text = newValue
-			layoutIfNeeded()
-			frame.size.height = max(BIG_CORNER, bubbleView.frame.maxY + Y_MARGIN)
-		}
+		set { textLabel.text = newValue }
 	}
 
 	class func create() -> Self {

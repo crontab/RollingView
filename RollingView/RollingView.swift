@@ -20,6 +20,7 @@ public protocol RollingViewDelegate: class {
 	/// Cell at `index` has been tapped; optional. No visual changes take place in this case. If `cell` is not nil, it means the cell is visible on screen or is in the "hot" area, so you can make changes in it to reflect the gesture.
 	func rollingView(_ rollingView: RollingView, didSelectCell cell: UIView?, atIndex index: Int)
 
+	///
 	func rollingView(_ rollingView: RollingView, didScrollTo offset: CGPoint)
 }
 
@@ -305,7 +306,8 @@ open class RollingView: UIScrollView {
 	@discardableResult
 	private func reuseCell(_ reuseCell: UIView, forUserIndex index: Int) -> UIView {
 		rollingViewDelegate?.rollingView(self, reuseCell: reuseCell, forIndex: index)
-		reuseCell.layoutIfNeeded()
+		let fittingSize = CGSize(width: reuseCell.frame.width, height: UIView.layoutFittingCompressedSize.height)
+		reuseCell.frame.size = reuseCell.systemLayoutSizeFitting(fittingSize, withHorizontalFittingPriority: .required, verticalFittingPriority: .defaultLow)
 		return reuseCell
 	}
 
