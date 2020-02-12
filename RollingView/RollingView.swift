@@ -19,6 +19,8 @@ public protocol RollingViewDelegate: class {
 
 	/// Cell at `index` has been tapped; optional. No visual changes take place in this case. If `cell` is not nil, it means the cell is visible on screen or is in the "hot" area, so you can make changes in it to reflect the gesture.
 	func rollingView(_ rollingView: RollingView, didSelectCell cell: UIView?, atIndex index: Int)
+
+	func rollingView(_ rollingView: RollingView, didScrollTo offset: CGPoint)
 }
 
 
@@ -28,6 +30,9 @@ public extension RollingViewDelegate {
 	}
 
 	func rollingView(_ rollingView: RollingView, didSelectCell: UIView?, atIndex index: Int) {
+	}
+
+	func rollingView(_ rollingView: RollingView, didScrollTo offset: CGPoint) {
 	}
 }
 
@@ -107,6 +112,7 @@ open class RollingView: UIScrollView {
 	}
 
 
+	/// Replace a cell with another one at a given index, possibly of a different class.
 	public func updateCell(at index: Int, cellClass: UIView.Type, animated: Bool) {
 		let internalIndex = index - userIndexOffset
 		if let detachedCell = placeholders[internalIndex].detach() {
@@ -114,6 +120,12 @@ open class RollingView: UIScrollView {
 		}
 		let newCell = recyclePool.dequeue(forUserIndex: index, cellClass: cellClass, width: contentView.frame.width, reuseCell: reuseCell)
 		updateCell(at: internalIndex, cell: newCell, animated: animated)
+	}
+
+
+	/// Return a cell view at given index if it's "warm" in memory, or nil otherwise
+	public func cellAt(_ index: Int) -> UIView? {
+		return placeholders[index - userIndexOffset].cell
 	}
 
 
@@ -136,7 +148,7 @@ open class RollingView: UIScrollView {
 	/// Tell RollingView to call your delegate method `rollingView(_:reuseCell:forIndex:)` on the cell at `index` if it's "hot", i.e. close or inside the visible area
 	public func reloadCell(at index: Int) {
 		if let cell = placeholders[index - userIndexOffset].cell {
-			rollingViewDelegate?.rollingView(self, reuseCell: cell, forIndex: index)
+			reuseCell(cell, forUserIndex: index)
 		}
 	}
 
@@ -174,7 +186,14 @@ open class RollingView: UIScrollView {
 
 	/// Scrolls to the cell by its index
 	public func scrollToCellIndex(_ index: Int, animated: Bool) {
-		scrollRectToVisible(frameOfCell(at: index), animated: animated)
+		// We allow scrolling to index 0 if there are no cells; useful when there's a header and we still want to scroll to the top of content
+		if index == 0 && placeholders.isEmpty {
+			let origin = convert(CGPoint(x: 0, y: contentTop), from: contentView)
+			scrollRectToVisible(CGRect(x: 0, y: origin.y, width: 1, height: 1), animated: animated)
+		}
+		else {
+			scrollRectToVisible(frameOfCell(at: index), animated: animated)
+		}
 	}
 
 
@@ -278,12 +297,15 @@ open class RollingView: UIScrollView {
 				self.reachedEdge[Edge.bottom.rawValue] = true
 				self.tryLoadMore(edge: .bottom)
 			}
+			rollingViewDelegate?.rollingView(self, didScrollTo: contentOffset)
 		}
 	}
 
 
+	@discardableResult
 	private func reuseCell(_ reuseCell: UIView, forUserIndex index: Int) -> UIView {
-		rollingViewDelegate!.rollingView(self, reuseCell: reuseCell, forIndex: index)
+		rollingViewDelegate?.rollingView(self, reuseCell: reuseCell, forIndex: index)
+		reuseCell.layoutIfNeeded()
 		return reuseCell
 	}
 
@@ -693,10 +715,13 @@ open class RollingView: UIScrollView {
 		}
 
 		static func add(cell: UIView, to superview: UIView, animated: Bool) {
-			cell.alpha = 0
 			superview.addSubview(cell)
-			UIView.animate(withDuration: animated ? ANIMATION_DURATION : 0) {
-				cell.alpha = 1
+			if animated {
+				let originalAlpha = cell.alpha
+				cell.alpha = 0
+				UIView.animate(withDuration: ANIMATION_DURATION) {
+					cell.alpha = originalAlpha
+				}
 			}
 		}
 

@@ -13,7 +13,6 @@ private let BIG_CORNER: CGFloat = 20
 private let SMALL_CORNER: CGFloat = 6
 
 private let Y_MARGIN: CGFloat = 2
-private let Y_INSET: CGFloat = 9
 
 
 class ChatBubble: UIView {
@@ -26,7 +25,7 @@ class ChatBubble: UIView {
 		set {
 			textLabel.text = newValue
 			layoutIfNeeded()
-			frame.size.height = max(BIG_CORNER, textLabel.frame.maxY + Y_INSET + Y_MARGIN)
+			frame.size.height = max(BIG_CORNER, bubbleView.frame.maxY + Y_MARGIN)
 		}
 	}
 
