@@ -761,8 +761,8 @@ private extension Array where Element == RollingView.Placeholder {
 
 
 #if DEBUG && DEBUG_ROLLING_VIEW
-	private func RLOG(_ s: String) { print(s) }
+private func RLOG(_ s: String) { print(s) }
 #else
-	private func RLOG(_ s: String) { }
+private func RLOG(_ s: String) { }
 #endif
 
