@@ -104,7 +104,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 	@IBAction func insetAction(_ sender: Any) {
 //		rollingView.insertCells(at: 0, cellClass: factoryForEdge(.top), count: 1, animated: true)
-//		rollingView.updateCell(at: 0, cellClass: LeftChatBubble.self, animated: true)
+//		rollingView.replaceCell(at: 0, cellClass: LeftChatBubble.self, animated: true)
 		kbShown = !kbShown
 		UIView.animate(withDuration: 0.25) {
 			self.rollingView.contentInset.bottom = self.bottomBar.frame.height + (self.kbShown ? 300 : 0)
@@ -117,5 +117,4 @@ class MainViewController: UIViewController, RollingViewDelegate {
 		let point = sender.location(in: rollingView)
 		print(rollingView.cellIndexFromPoint(point) ?? 0)
 	}
-
 }

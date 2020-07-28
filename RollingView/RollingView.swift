@@ -86,14 +86,9 @@ open class RollingView: UIScrollView {
 	}
 
 
-	/// Replace a cell with another one at a given index, possibly of a different class.
-	public func updateCell(at index: Int, cellClass: UIView.Type) {
-		let internalIndex = index + zeroIndexOffset
-		if let detachedCell = placeholders[internalIndex].detach() {
-			recyclePool.enqueue(detachedCell)
-		}
-		let newCell = recyclePool.dequeue(forUserIndex: index, cellClass: cellClass, width: contentView.frame.width, reuseCell: reuseCell)
-		updateCell(at: internalIndex, cell: newCell)
+	/// Replace a cell with another one at a given index, possibly of a different class and different height, too
+	public func replaceCell(at index: Int, cellClass: UIView.Type) {
+		doReplaceCell(at: index + zeroIndexOffset, cellClass: cellClass)
 	}
 
 
@@ -111,18 +106,10 @@ open class RollingView: UIScrollView {
 	}
 
 
-	/// Tell RollingView to call your delegate method `rollingView(_:reuseCell:forIndex:)` for each of the cells that are kept in the "hot" area, i.e. close or inside the visible area; this is similar to UITableView's `reloadData()`
-	public func refreshHotCells() {
-		for internalIndex in topHotIndex...bottomHotIndex {
-			reloadCell(at: internalIndex - zeroIndexOffset)
-		}
-	}
-
-
 	/// Tell RollingView to call your delegate method `rollingView(_:reuseCell:forIndex:)` on the cell at `index` if it's "hot", i.e. close or inside the visible area
 	public func reloadCell(at index: Int) {
 		if let cell = placeholders[index + zeroIndexOffset].cell {
-			reuseCell(cell, forUserIndex: index)
+			reuseCell(cell, forUserIndex: index) ; #warning("TODO: resize is not taken into account here")
 		}
 	}
 
@@ -257,12 +244,10 @@ open class RollingView: UIScrollView {
 	}
 
 
-	@discardableResult
-	private func reuseCell(_ reuseCell: UIView, forUserIndex index: Int) -> UIView {
+	private func reuseCell(_ reuseCell: UIView, forUserIndex index: Int) {
 		rollingViewDelegate?.rollingView(self, reuseCell: reuseCell, forIndex: index)
-		let fittingSize = CGSize(width: reuseCell.frame.width, height: UIView.layoutFittingCompressedSize.height)
+		let fittingSize = CGSize(width: contentView.frame.width, height: UIView.layoutFittingCompressedSize.height)
 		reuseCell.frame.size = reuseCell.systemLayoutSizeFitting(fittingSize, withHorizontalFittingPriority: .required, verticalFittingPriority: .defaultLow)
-		return reuseCell
 	}
 
 
@@ -371,13 +356,13 @@ open class RollingView: UIScrollView {
 
 		case .top:
 			zeroIndexOffset += count
-			var newCells: [Placeholder] = []
+			var newPlaceholders: [Placeholder] = []
 			var top: CGFloat = contentTop - totalHeight
 			for _ in 0..<count {
-				newCells.append(Placeholder(cellClass: cellClass, top: top, height: estimatedCellHeight))
+				newPlaceholders.append(Placeholder(cellClass: cellClass, top: top, height: estimatedCellHeight))
 				top += estimatedCellHeight
 			}
-			placeholders.insert(contentsOf: newCells, at: 0)
+			placeholders.insert(contentsOf: newPlaceholders, at: 0)
 
 		case .bottom:
 			for _ in 0..<count {
@@ -392,38 +377,26 @@ open class RollingView: UIScrollView {
 
 	private func doInsertCells(at index: Int, cellClass: UIView.Type, count: Int) {
 		let totalHeight: CGFloat = estimatedCellHeight * CGFloat(count)
-		var i = index
-		var top: CGFloat = placeholders.indices.contains(i - 1) ? placeholders[i - 1].bottom : contentTop
-		for _ in 0..<count {
+		var top: CGFloat = placeholders.indices ~= (index - 1) ? placeholders[index - 1].bottom : contentTop
+		for i in index..<(index + count) {
 			placeholders.insert(Placeholder(cellClass: cellClass, top: top, height: estimatedCellHeight), at: i)
 			top += estimatedCellHeight
-			i += 1
 		}
-		while i < placeholders.count {
+		for i in (index + count)..<placeholders.count {
 			placeholders[i].moveBy(totalHeight)
-			i += 1
 		}
 		validateVisibleRect()
 		contentDidAddSpace(edge: .bottom, addedHeight: totalHeight)
 	}
 
 
-	private func updateCell(at index: Int, cell: UIView) {
-		let delta = cell.frame.height - placeholders[index].height
-		if delta != 0 {
-			placeholders[index].height = cell.frame.height
-			for i in (index + 1)..<placeholders.count {
-				placeholders[i].moveBy(delta)
-			}
+	private func doReplaceCell(at index: Int, cellClass: UIView.Type) {
+		if let detachedCell = placeholders[index].detach() {
+			recyclePool.enqueue(detachedCell)
 		}
-		precondition(placeholders[index].cell == nil)
-		let cellClass = type(of: cell)
-		if cellClass != placeholders[index].cellClass {
-			placeholders[index].cellClass = cellClass
-		}
-		recyclePool.enqueue(cell)
+		placeholders[index].cellClass = cellClass
 		validateVisibleRect()
-		contentDidAddSpace(edge: .bottom, addedHeight: delta)
+		contentDidAddSpace(edge: .bottom, addedHeight: 0) ; #warning("TODO")
 	}
 
 
@@ -442,15 +415,20 @@ open class RollingView: UIScrollView {
 		topHotIndex = max(0, placeholders.binarySearch(top: hotRect.minY) - 1)
 		var i = topHotIndex
 		repeat {
+			// Make sure the hot cell already exists or create a new one otherwise
 			if placeholders[i].cell == nil {
-				let cell = recyclePool.dequeue(forUserIndex: i - zeroIndexOffset, cellClass: placeholders[i].cellClass, width: contentView.frame.width, reuseCell: reuseCell)
-				placeholders[i].attach(cell: cell, toSuperview: contentView)
+				let cell = recyclePool.dequeue(cellClass: placeholders[i].cellClass)
+				reuseCell(cell, forUserIndex: i - zeroIndexOffset)
+				let deltaHeight = placeholders[i].attach(cell: cell, toSuperview: contentView)
+				if deltaHeight != 0 {
+					cellAt(i, didChangeHeightBy: deltaHeight)
+				}
 			}
 			i += 1
 		} while i < placeholders.count && placeholders[i].bottom < hotRect.maxY
 		bottomHotIndex = i - 1
 
-		// Expand the hot area by warmCellCount more cells in both directions; everything beyond that can be freed:
+		// Expand the hot area by warmCellCount more cells in both directions; everything beyond that can be removed and sent to the reuse pool
 		i = topHotIndex - warmCellCount / 2
 		while i >= 0, let detachedCell = placeholders[i].detach() {
 			recyclePool.enqueue(detachedCell)
@@ -462,6 +440,22 @@ open class RollingView: UIScrollView {
 			recyclePool.enqueue(detachedCell)
 			RLOG("RollingView: discarding at \(i - zeroIndexOffset)")
 			i += 1
+		}
+	}
+
+
+	private func cellAt(_ index: Int, didChangeHeightBy delta: CGFloat) {
+		precondition(delta != 0)
+		if index < zeroIndexOffset {
+			// If the cell in question is above the zero point, move all cells (or their placeholders) above it by delta, including the cell itself
+			for i in 0...index {
+				placeholders[i].moveBy(-delta)
+			}
+		}
+		else {
+			for i in (index + 1)..<placeholders.count {
+				placeholders[i].moveBy(delta)
+			}
 		}
 	}
 
@@ -494,12 +488,10 @@ open class RollingView: UIScrollView {
 			dict[key]!.enqueue(element)
 		}
 
-		func dequeue(forUserIndex index: Int, cellClass: UIView.Type, width: CGFloat, reuseCell: (UIView, Int) -> UIView) -> UIView {
+		func dequeue(cellClass: UIView.Type) -> UIView {
 			let key = ObjectIdentifier(cellClass)
 			precondition(dict[key] != nil, "RollingView cell class \(cellClass) not registered")
-			let cell = dict[key]!.dequeueOrCreate()
-			cell.frame.size.width = width
-			return reuseCell(cell, index)
+			return dict[key]!.dequeueOrCreate()
 		}
 
 		func clear() {
