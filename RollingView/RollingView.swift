@@ -112,6 +112,11 @@ open class RollingView: UIScrollView {
 	}
 
 
+	public func reload() {
+		doReloadAll()
+	}
+
+
 	/// Returns a cell index for given a point on screen in RollingView's coordinate space.
 	public func cellIndexFromPoint(_ point: CGPoint) -> Int? {
 		let point = convert(point, to: contentView)
@@ -242,8 +247,8 @@ open class RollingView: UIScrollView {
 	}
 
 
-	private func reuseCell(_ cell: UIView, forUserIndex index: Int) {
-		rollingViewDelegate?.rollingView(self, reuseCell: cell, forIndex: index)
+	private func reuseCell(_ cell: UIView, forIndex index: Int) {
+		rollingViewDelegate?.rollingView(self, reuseCell: cell, forIndex: index - zeroIndexOffset)
 		let fittingSize = CGSize(width: contentView.frame.width, height: UIView.layoutFittingCompressedSize.height)
 		cell.frame.size = cell.systemLayoutSizeFitting(fittingSize, withHorizontalFittingPriority: .required, verticalFittingPriority: .defaultLow)
 	}
@@ -299,23 +304,25 @@ open class RollingView: UIScrollView {
 		contentSize.width = frame.width
 		let newContentHeight = (contentBottom - contentTop) + headerHeight + footerHeight
 		let addedHeight = newContentHeight - contentSize.height
+		guard addedHeight != 0 else {
+			return
+		}
 		contentSize.height = newContentHeight
 
 		switch edge {
 
-		case .top:
-			headerView?.frame.origin.y = contentTop - (headerView?.frame.height ?? 0)
+			case .top:
+				headerView?.frame.origin.y = contentTop - (headerView?.frame.height ?? 0)
 
-			// The magic part of RollingView: when extra space is added on top, contentView and contentSize are adjusted here to create an illusion of infinite expansion:
-			let delta = safeAreaInsets.top + contentInset.top + contentInset.bottom + safeAreaInsets.bottom + contentSize.height - bounds.height
+				// The magic part of RollingView: when extra space is added on top, contentView and contentSize are adjusted here to create an illusion of infinite expansion:
+				let delta = safeAreaInsets.top + contentInset.top + contentInset.bottom + safeAreaInsets.bottom + contentSize.height - bounds.height
 
-			// The below is to ensure that when new content is added on top, the scroller doesn't move visually (though it does in terms of relative coordinates). It gets a bit trickier when the overall size of content is smaller than the visual bounds, hence:
-			contentOffset.y += max(0, min(addedHeight, delta))
-			contentView.frame.origin.y += addedHeight
+				// The below is to ensure that when new content is added on top, the scroller doesn't move visually (though it does in terms of relative coordinates). It gets a bit trickier when the overall size of content is smaller than the visual bounds, hence:
+				contentOffset.y += max(0, min(addedHeight, delta))
+				contentView.frame.origin.y += addedHeight
 
-		case .bottom:
-			footerView?.frame.origin.y = contentBottom
-			break
+			case .bottom:
+				footerView?.frame.origin.y = contentBottom
 		}
 	}
 
@@ -350,25 +357,25 @@ open class RollingView: UIScrollView {
 	private func doAddCells(edge: Edge, cellClass: UIView.Type, count: Int) {
 		switch edge {
 
-		case .top:
-			zeroIndexOffset += count
-			var newPlaceholders: [Placeholder] = []
-			let totalHeight: CGFloat = estimatedCellHeight * CGFloat(count)
-			var top: CGFloat = contentTop - totalHeight
-			for _ in 0..<count {
-				newPlaceholders.append(Placeholder(cellClass: cellClass, top: top, height: estimatedCellHeight))
-				top += estimatedCellHeight
-			}
-			placeholders.insert(contentsOf: newPlaceholders, at: 0)
+			case .top:
+				zeroIndexOffset += count
+				var newPlaceholders: [Placeholder] = []
+				let totalHeight: CGFloat = estimatedCellHeight * CGFloat(count)
+				var top: CGFloat = contentTop - totalHeight
+				for _ in 0..<count {
+					newPlaceholders.append(Placeholder(cellClass: cellClass, top: top, height: estimatedCellHeight))
+					top += estimatedCellHeight
+				}
+				placeholders.insert(contentsOf: newPlaceholders, at: 0)
 
-		case .bottom:
-			for _ in 0..<count {
-				placeholders.append(Placeholder(cellClass: cellClass, top: contentBottom, height: estimatedCellHeight))
-			}
+			case .bottom:
+				for _ in 0..<count {
+					placeholders.append(Placeholder(cellClass: cellClass, top: contentBottom, height: estimatedCellHeight))
+				}
 		}
 
-		validateVisibleRect()
 		contentDidAddSpace(edge: edge)
+		validateVisibleRect()
 	}
 
 
@@ -382,8 +389,8 @@ open class RollingView: UIScrollView {
 		for i in (index + count)..<placeholders.count {
 			placeholders[i].moveBy(totalHeight)
 		}
-		validateVisibleRect()
 		contentDidAddSpace(edge: .bottom)
+		validateVisibleRect()
 	}
 
 
@@ -392,20 +399,35 @@ open class RollingView: UIScrollView {
 			recyclePool.enqueue(detachedCell)
 		}
 		placeholders[index].cellClass = cellClass
-		validateVisibleRect()
 		contentDidAddSpace(edge: .bottom)
+		validateVisibleRect()
 	}
 
 
 	private func doReloadCell(at index: Int) {
 		if let cell = placeholders[index].cell {
-			reuseCell(cell, forUserIndex: index)
+			reuseCell(cell, forIndex: index)
 			let delta = placeholders[index].update()
 			if delta != 0 {
 				cellAt(index, didChangeHeightBy: delta)
-				contentDidAddSpace(edge: .bottom)
 			}
 		}
+	}
+
+
+	private func doReloadAll() {
+		// NOTE: this traverses the entire placeholders array. Although very few placeholders will have actual cells associated this is still not ideal.
+		for i in placeholders.indices {
+			if let cell = placeholders[i].cell {
+				reuseCell(cell, forIndex: i)
+				let delta = placeholders[i].update()
+				if delta != 0 {
+					cellAt(i, didChangeHeightBy: delta)
+				}
+			}
+		}
+		contentDidAddSpace(edge: .bottom)
+		validateVisibleRect()
 	}
 
 
@@ -427,7 +449,7 @@ open class RollingView: UIScrollView {
 			// Make sure the hot cell already exists or create a new one otherwise
 			if placeholders[i].cell == nil {
 				let cell = recyclePool.dequeue(cellClass: placeholders[i].cellClass)
-				reuseCell(cell, forUserIndex: i - zeroIndexOffset)
+				reuseCell(cell, forIndex: i)
 				let deltaHeight = placeholders[i].attach(cell: cell, toSuperview: contentView)
 				if deltaHeight != 0 {
 					cellAt(i, didChangeHeightBy: deltaHeight)
@@ -455,17 +477,20 @@ open class RollingView: UIScrollView {
 
 	private func cellAt(_ index: Int, didChangeHeightBy delta: CGFloat) {
 		precondition(delta != 0)
+		// If the cell in question is above the zero index, move all cells (or their placeholders) above it by delta, including the cell itself; otherwise move down cells that are below it. This is costly though maybe not so much given that there are only very few cells associated with placeholders at any given time.
 		if index < zeroIndexOffset {
-			// If the cell in question is above the zero point, move all cells (or their placeholders) above it by delta, including the cell itself
 			for i in 0...index {
 				placeholders[i].moveBy(-delta)
 			}
+			contentDidAddSpace(edge: .top)
 		}
 		else {
 			for i in (index + 1)..<placeholders.count {
 				placeholders[i].moveBy(delta)
 			}
+			contentDidAddSpace(edge: .bottom)
 		}
+		validateVisibleRect()
 	}
 
 
@@ -556,7 +581,7 @@ open class RollingView: UIScrollView {
 			cell.frame.origin.y = top
 			let delta = cell.frame.size.height - height
 			height = cell.frame.size.height
-			Self.add(cell: cell, to: superview, fadeIn: false)
+			superview.addSubview(cell)
 			return delta
 		}
 
@@ -574,17 +599,6 @@ open class RollingView: UIScrollView {
 			let delta = cell.frame.size.height - height
 			height = cell.frame.size.height
 			return delta
-		}
-
-		static func add(cell: UIView, to superview: UIView, fadeIn: Bool) {
-			superview.addSubview(cell)
-			if fadeIn {
-				let originalAlpha = cell.alpha
-				cell.alpha = 0
-				UIView.animate(withDuration: ANIMATION_DURATION) {
-					cell.alpha = originalAlpha
-				}
-			}
 		}
 
 		func containsPoint(_ point: CGPoint) -> Bool {
