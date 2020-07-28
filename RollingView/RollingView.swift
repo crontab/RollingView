@@ -49,9 +49,9 @@ open class RollingView: UIScrollView {
 	public weak var rollingViewDelegate: RollingViewDelegate?
 
 
-	/// Set this if the height of cells is known and fixed; `nil` otherwse. RollingView can be slightly more efficient
-	public var fixedCellHeight: CGFloat? {
-		didSet { precondition(fixedCellHeight == nil || fixedCellHeight! >= 1) }
+	/// Set this if the height of cells is known, or an estimate. When your cells have this exact height, RollingView can be more efficient especially when adding new cells.
+	public var estimatedCellHeight: CGFloat = 44 {
+		didSet { precondition(estimatedCellHeight >= 1) }
 	}
 
 
@@ -73,50 +73,32 @@ open class RollingView: UIScrollView {
 	}
 
 
-	/// Tell RollingView that cells should be added either on top or to the bottom of the existing content. Your `rollingView(_:reuseCell:forIndex:)` implementation may be called for some or all of the added cells. Optionally the cells can fade-in animated.
-	public func addCells(edge: Edge, cellClass: UIView.Type, count: Int, animated: Bool) {
+	/// Tell RollingView that cells should be added either on top or to the bottom of the existing content. Your `rollingView(_:reuseCell:forIndex:)` implementation may be called for some or all of the added cells.
+	public func addCells(edge: Edge, cellClass: UIView.Type, count: Int) {
 		guard count > 0 else {
 			return
 		}
-
-		if fixedCellHeight != nil {
-			addFixedCells(to: edge, cellClass: cellClass, count: count, animated: animated)
-		}
-		else {
-			let startUserIndex = startUserIndexForEdge(edge, newViewCount: count)
-			let views = (startUserIndex..<(startUserIndex + count)).map { (index) -> UIView in
-				return self.recyclePool.dequeue(forUserIndex: index, cellClass: cellClass, width: contentView.frame.width, reuseCell: reuseCell)
-			}
-			addCells(to: edge, cells: views, animated: animated)
-		}
+		doAddCells(edge: edge, cellClass: cellClass, count: count)
 	}
 
 
-	/// Tell RollingView that cells should be inserted starting at `index`. Your `rollingView(_:reuseCell:forIndex:)` implementation may be called for some or all of the inserted cells. Optionally the cells can fade-in animated.
-	public func insertCells(at index: Int, cellClass: UIView.Type, count: Int, animated: Bool) {
+	/// Tell RollingView that cells should be inserted starting at `index`. Your `rollingView(_:reuseCell:forIndex:)` implementation may be called for some or all of the inserted cells.
+	public func insertCells(at index: Int, cellClass: UIView.Type, count: Int) {
 		guard count > 0 else {
 			return
 		}
-		if fixedCellHeight != nil {
-			insertFixedCells(at: index - userIndexOffset, cellClass: cellClass, count: count, animated: animated)
-		}
-		else {
-			let views = (index..<(index + count)).map { (index) -> UIView in
-				return self.recyclePool.dequeue(forUserIndex: index, cellClass: cellClass, width: contentView.frame.width, reuseCell: reuseCell)
-			}
-			insertCells(at: index - userIndexOffset, cells: views, animated: animated)
-		}
+		doInsertCells(at: index - userIndexOffset, cellClass: cellClass, count: count)
 	}
 
 
 	/// Replace a cell with another one at a given index, possibly of a different class.
-	public func updateCell(at index: Int, cellClass: UIView.Type, animated: Bool) {
+	public func updateCell(at index: Int, cellClass: UIView.Type) {
 		let internalIndex = index - userIndexOffset
 		if let detachedCell = placeholders[internalIndex].detach() {
 			recyclePool.enqueue(detachedCell)
 		}
 		let newCell = recyclePool.dequeue(forUserIndex: index, cellClass: cellClass, width: contentView.frame.width, reuseCell: reuseCell)
-		updateCell(at: internalIndex, cell: newCell, animated: animated)
+		updateCell(at: internalIndex, cell: newCell)
 	}
 
 
@@ -205,14 +187,14 @@ open class RollingView: UIScrollView {
 		willSet {
 			if let headerView = headerView {
 				headerView.removeFromSuperview()
-				contentDidAddSpace(edge: .top, addedHeight: -headerView.frame.height, animated: false)
+				contentDidAddSpace(edge: .top, addedHeight: -headerView.frame.height)
 			}
 		}
 		didSet {
 			if let headerView = headerView {
 				headerView.frame.size.width = frame.width
 				contentView.addSubview(headerView)
-				contentDidAddSpace(edge: .top, addedHeight: headerView.frame.height, animated: false)
+				contentDidAddSpace(edge: .top, addedHeight: headerView.frame.height)
 			}
 		}
 	}
@@ -223,14 +205,14 @@ open class RollingView: UIScrollView {
 		willSet {
 			if let footerView = footerView {
 				footerView.removeFromSuperview()
-				contentDidAddSpace(edge: .bottom, addedHeight: -footerView.frame.height, animated: false)
+				contentDidAddSpace(edge: .bottom, addedHeight: -footerView.frame.height)
 			}
 		}
 		didSet {
 			if let footerView = footerView {
 				footerView.frame.size.width = frame.width
 				contentView.addSubview(footerView)
-				contentDidAddSpace(edge: .bottom, addedHeight: footerView.frame.height, animated: false)
+				contentDidAddSpace(edge: .bottom, addedHeight: footerView.frame.height)
 			}
 		}
 	}
@@ -262,7 +244,7 @@ open class RollingView: UIScrollView {
 
 	public override var contentOffset: CGPoint {
 		didSet {
-			validateVisibleRect(animated: false)
+			validateVisibleRect()
 			if !reachedEdge[Edge.top.rawValue] {
 				let offset = contentOffset.y + contentInset.top + safeAreaInsets.top
 				// Try to load more conent if the top of content is half a screen away
@@ -336,23 +318,19 @@ open class RollingView: UIScrollView {
 	}
 
 
-	private func contentDidAddSpace(edge: Edge, addedHeight: CGFloat, animated: Bool) {
+	private func contentDidAddSpace(edge: Edge, addedHeight: CGFloat) {
 		contentSize.width = frame.width
 		contentSize.height += addedHeight
 		switch edge {
 		case .top:
-			UIView.animate(withDuration: animated ? Self.ANIMATION_DURATION : 0) {
-				self.headerView?.frame.origin.y = self.contentTop - (self.headerView?.frame.height ?? 0)
-				// The magic part of RollingView: when extra space is added on top, contentView and contentSize are adjusted here to create an illusion of infinite expansion:
-				let delta = self.safeAreaInsets.top + self.contentInset.top + self.contentInset.bottom + self.safeAreaInsets.bottom + self.contentSize.height - self.bounds.height
-				// The below is to ensure that when new content is added on top, the scroller doesn't move visually (though it does in terms of relative coordinates). It gets a bit trickier when the overall size of content is smaller than the visual bounds, hence:
-				self.contentOffset.y += max(0, min(addedHeight, delta))
-				self.contentView.frame.origin.y += addedHeight
-			}
+			headerView?.frame.origin.y = contentTop - (headerView?.frame.height ?? 0)
+			// The magic part of RollingView: when extra space is added on top, contentView and contentSize are adjusted here to create an illusion of infinite expansion:
+			let delta = safeAreaInsets.top + contentInset.top + contentInset.bottom + safeAreaInsets.bottom + contentSize.height - bounds.height
+			// The below is to ensure that when new content is added on top, the scroller doesn't move visually (though it does in terms of relative coordinates). It gets a bit trickier when the overall size of content is smaller than the visual bounds, hence:
+			contentOffset.y += max(0, min(addedHeight, delta))
+			contentView.frame.origin.y += addedHeight
 		case .bottom:
-			UIView.animate(withDuration: animated ? Self.ANIMATION_DURATION : 0) {
-				self.footerView?.frame.origin.y = self.contentBottom
-			}
+			footerView?.frame.origin.y = contentBottom
 			break
 		}
 	}
@@ -402,12 +380,8 @@ open class RollingView: UIScrollView {
 	}
 
 
-	private func addFixedCells(to edge: Edge, cellClass: UIView.Type, count: Int, animated: Bool) {
-		guard let fixedCellHeight = fixedCellHeight else {
-			preconditionFailure()
-		}
-
-		let totalHeight: CGFloat = fixedCellHeight * CGFloat(count)
+	private func doAddCells(edge: Edge, cellClass: UIView.Type, count: Int) {
+		let totalHeight: CGFloat = estimatedCellHeight * CGFloat(count)
 
 		switch edge {
 
@@ -416,125 +390,46 @@ open class RollingView: UIScrollView {
 			var newCells: [Placeholder] = []
 			var top: CGFloat = contentTop - totalHeight
 			for _ in 0..<count {
-				newCells.append(Placeholder(cellClass: cellClass, top: top, height: fixedCellHeight))
-				top += fixedCellHeight
+				newCells.append(Placeholder(cellClass: cellClass, top: top, height: estimatedCellHeight))
+				top += estimatedCellHeight
 			}
 			placeholders.insert(contentsOf: newCells, at: 0)
 
 		case .bottom:
 			for _ in 0..<count {
-				placeholders.append(Placeholder(cellClass: cellClass, top: contentBottom, height: fixedCellHeight))
+				placeholders.append(Placeholder(cellClass: cellClass, top: contentBottom, height: estimatedCellHeight))
 			}
 		}
 
-		validateVisibleRect(animated: animated)
-		contentDidAddSpace(edge: edge, addedHeight: totalHeight, animated: animated)
+		validateVisibleRect()
+		contentDidAddSpace(edge: edge, addedHeight: totalHeight)
 	}
 
 
-	private func addCells(to edge: Edge, cells: [UIView], animated: Bool) {
-		var totalHeight: CGFloat = 0
-
-		switch edge {
-
-		case .top:
-			userIndexOffset -= cells.count
-			// We add the new cells reversed to the local temp array first, then insert into the global one in reverse order again; this way it's easier to calculate the coordinates
-			var newCells: [Placeholder] = []
-			var top: CGFloat = contentTop
-			for cell in cells.reversed() {
-				let cellHeight = cell.frame.height
-				top -= cellHeight
-				totalHeight += cellHeight
-				cell.frame.origin.y = top
-
-				// If the hot window is not at the top, then add a placeholder and discard the cell
-				if topHotIndex > 0 {
-					newCells.append(Placeholder(cellClass: type(of: cell), top: top, height: cellHeight))
-					RLOG("RollingView: discarding unused cell")
-				}
-				else {
-					newCells.append(Placeholder(cell: cell, addToSuperview: contentView, animated: animated))
-				}
-			}
-			placeholders.insert(contentsOf: newCells.reversed(), at: 0)
-
-		case .bottom:
-			for cell in cells {
-				let cellHeight = cell.frame.height
-				totalHeight += cellHeight
-				cell.frame.origin.y = contentBottom
-
-				// If this is beyond our hot area, then add a placeholder and and discard the cell
-				if bottomHotIndex < placeholders.count - 1 {
-					placeholders.append(Placeholder(cellClass: type(of: cell), top: contentBottom, height: cellHeight))
-					RLOG("RollingView: discarding unused cell")
-				}
-				else {
-					placeholders.append(Placeholder(cell: cell, addToSuperview: contentView, animated: animated))
-				}
-			}
-		}
-
-		validateVisibleRect(animated: false) // false because this batch of cells was already animated above
-		contentDidAddSpace(edge: edge, addedHeight: totalHeight, animated: animated)
-	}
-
-
-	private func insertFixedCells(at index: Int, cellClass: UIView.Type, count: Int, animated: Bool) {
-		guard let fixedCellHeight = fixedCellHeight else {
-			preconditionFailure()
-		}
-		let totalHeight: CGFloat = fixedCellHeight * CGFloat(count)
+	private func doInsertCells(at index: Int, cellClass: UIView.Type, count: Int) {
+		let totalHeight: CGFloat = estimatedCellHeight * CGFloat(count)
 		var i = index
 		var top: CGFloat = placeholders.indices.contains(i - 1) ? placeholders[i - 1].bottom : contentTop
 		for _ in 0..<count {
-			placeholders.insert(Placeholder(cellClass: cellClass, top: top, height: fixedCellHeight), at: i)
-			top += fixedCellHeight
+			placeholders.insert(Placeholder(cellClass: cellClass, top: top, height: estimatedCellHeight), at: i)
+			top += estimatedCellHeight
 			i += 1
 		}
 		while i < placeholders.count {
-			placeholders[i].moveBy(totalHeight, animated: animated)
+			placeholders[i].moveBy(totalHeight)
 			i += 1
 		}
-		validateVisibleRect(animated: animated)
-		contentDidAddSpace(edge: .bottom, addedHeight: totalHeight, animated: animated)
+		validateVisibleRect()
+		contentDidAddSpace(edge: .bottom, addedHeight: totalHeight)
 	}
 
 
-	private func insertCells(at index: Int, cells: [UIView], animated: Bool) {
-		var totalHeight: CGFloat = 0
-		var i = index
-		let discard = i < topHotIndex || i > bottomHotIndex
-		for cell in cells {
-			let cellHeight = cell.frame.height
-			totalHeight += cellHeight
-			cell.frame.origin.y = placeholders.indices.contains(i - 1) ? placeholders[i - 1].bottom : contentTop
-			if discard {
-				placeholders.insert(Placeholder(cellClass: type(of: cell), top: cell.frame.origin.y, height: cellHeight), at: i)
-				RLOG("RollingView: discarding unused cell")
-			}
-			else {
-				placeholders.insert(Placeholder(cell: cell, addToSuperview: contentView, animated: animated), at: i)
-			}
-			i += 1
-		}
-		while i < placeholders.count {
-			placeholders[i].moveBy(totalHeight, animated: animated)
-			i += 1
-		}
-		validateVisibleRect(animated: false) // false because this batch of cells will already be animated in addCells()
-		contentDidAddSpace(edge: .bottom, addedHeight: totalHeight, animated: animated)
-	}
-
-
-
-	private func updateCell(at index: Int, cell: UIView, animated: Bool) {
+	private func updateCell(at index: Int, cell: UIView) {
 		let delta = cell.frame.height - placeholders[index].height
 		if delta != 0 {
 			placeholders[index].height = cell.frame.height
 			for i in (index + 1)..<placeholders.count {
-				placeholders[i].moveBy(delta, animated: animated)
+				placeholders[i].moveBy(delta)
 			}
 		}
 		precondition(placeholders[index].cell == nil)
@@ -543,13 +438,12 @@ open class RollingView: UIScrollView {
 			placeholders[index].cellClass = cellClass
 		}
 		recyclePool.enqueue(cell)
-		validateVisibleRect(animated: animated)
-		contentDidAddSpace(edge: .bottom, addedHeight: delta, animated: animated)
+		validateVisibleRect()
+		contentDidAddSpace(edge: .bottom, addedHeight: delta)
 	}
 
 
-
-	private func validateVisibleRect(animated: Bool) {
+	private func validateVisibleRect() {
 		guard let contentView = contentView, rollingViewDelegate != nil, !placeholders.isEmpty else {
 			return
 		}
@@ -566,7 +460,7 @@ open class RollingView: UIScrollView {
 		repeat {
 			if placeholders[index].cell == nil {
 				let cell = recyclePool.dequeue(forUserIndex: index + userIndexOffset, cellClass: placeholders[index].cellClass, width: contentView.frame.width, reuseCell: reuseCell)
-				placeholders[index].attach(cell: cell, toSuperview: contentView, animated: animated)
+				placeholders[index].attach(cell: cell, toSuperview: contentView)
 			}
 			index += 1
 		} while index < placeholders.count && placeholders[index].bottom < hotRect.maxY
@@ -671,20 +565,14 @@ open class RollingView: UIScrollView {
 			self.height = height
 		}
 
-		init(cell: UIView, addToSuperview superview: UIView, animated: Bool) {
-			self.cell = cell
-			self.cellClass = type(of: cell)
-			self.top = cell.frame.minY
-			self.height = cell.frame.height
-			Self.add(cell: cell, to: superview, animated: animated)
-		}
-
-		mutating func attach(cell: UIView, toSuperview superview: UIView, animated: Bool) {
+		mutating func attach(cell: UIView, toSuperview superview: UIView) -> CGFloat {
 			precondition(self.cell == nil)
 			self.cell = cell
 			cell.frame.origin.y = top
-			cell.frame.size.height = height
-			Self.add(cell: cell, to: superview, animated: animated)
+			let delta = cell.frame.size.height - height
+			height = cell.frame.size.height
+			Self.add(cell: cell, to: superview, fadeIn: false)
+			return delta
 		}
 
 		mutating func detach() -> UIView? {
@@ -694,9 +582,9 @@ open class RollingView: UIScrollView {
 			return temp
 		}
 
-		static func add(cell: UIView, to superview: UIView, animated: Bool) {
+		static func add(cell: UIView, to superview: UIView, fadeIn: Bool) {
 			superview.addSubview(cell)
-			if animated {
+			if fadeIn {
 				let originalAlpha = cell.alpha
 				cell.alpha = 0
 				UIView.animate(withDuration: ANIMATION_DURATION) {
@@ -709,14 +597,9 @@ open class RollingView: UIScrollView {
 			return point.y >= top && point.y <= top + height
 		}
 
-		mutating func moveBy(_ offset: CGFloat, animated: Bool) {
+		mutating func moveBy(_ offset: CGFloat) {
 			top += offset
-			if let cell = cell {
-				let top = self.top
-				UIView.animate(withDuration: animated ? ANIMATION_DURATION : 0) {
-					cell.frame.origin.y = top
-				}
-			}
+			cell?.frame.origin.y = top
 		}
 	}
 }
