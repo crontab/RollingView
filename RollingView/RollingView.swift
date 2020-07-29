@@ -86,9 +86,41 @@ open class RollingView: UIScrollView {
 	}
 
 
+	/// Removes cells and saves them for recycling if there are any allocated within a given range
+	public func removeCells(at index: Int, count: Int) {
+		guard count > 0 else {
+			return
+		}
+		doRemoveCells(at: index + zeroIndexOffset, count: count)
+	}
+
+
 	/// Replace a cell with another one at a given index, possibly of a different class and different height, too
 	public func replaceCell(at index: Int, cellClass: UIView.Type) {
 		doReplaceCell(at: index + zeroIndexOffset, cellClass: cellClass)
+	}
+
+
+	/// Total number of cells in the view, instantiated or not
+	public var count: Int { placeholders.count }
+
+
+	/// Range of cell indices; the lower bound can be negative if some cells were added to the top edge
+	public var indices: Range<Int> { (-zeroIndexOffset)..<(placeholders.count - zeroIndexOffset) }
+
+
+	/// Set a new number of cells; cells can be added or removed depending on which way the value changes
+	public func setCount(_ newValue: Int, cellClass: UIView.Type, reload: Bool) {
+		let delta = newValue - placeholders.count
+		if delta < 0 {
+			removeCells(at: placeholders.count - zeroIndexOffset, count: -delta)
+		}
+		if reload {
+			self.reload()
+		}
+		if delta > 0 {
+			addCells(edge: .bottom, cellClass: cellClass, count: delta)
+		}
 	}
 
 
@@ -172,14 +204,14 @@ open class RollingView: UIScrollView {
 		willSet {
 			if let headerView = headerView {
 				headerView.removeFromSuperview()
-				contentDidAddSpace(edge: .top)
+				updateContentLayout(edgeHint: .top)
 			}
 		}
 		didSet {
 			if let headerView = headerView {
 				headerView.frame.size.width = frame.width
 				contentView.addSubview(headerView)
-				contentDidAddSpace(edge: .top)
+				updateContentLayout(edgeHint: .top)
 			}
 		}
 	}
@@ -190,14 +222,14 @@ open class RollingView: UIScrollView {
 		willSet {
 			if let footerView = footerView {
 				footerView.removeFromSuperview()
-				contentDidAddSpace(edge: .bottom)
+				updateContentLayout(edgeHint: .bottom)
 			}
 		}
 		didSet {
 			if let footerView = footerView {
 				footerView.frame.size.width = frame.width
 				contentView.addSubview(footerView)
-				contentDidAddSpace(edge: .bottom)
+				updateContentLayout(edgeHint: .bottom)
 			}
 		}
 	}
@@ -300,7 +332,7 @@ open class RollingView: UIScrollView {
 	}
 
 
-	private func contentDidAddSpace(edge: Edge) {
+	private func updateContentLayout(edgeHint: Edge) {
 		contentSize.width = frame.width
 		let newContentHeight = (contentBottom - contentTop) + headerHeight + footerHeight
 		let addedHeight = newContentHeight - contentSize.height
@@ -309,7 +341,7 @@ open class RollingView: UIScrollView {
 		}
 		contentSize.height = newContentHeight
 
-		switch edge {
+		switch edgeHint {
 
 			case .top:
 				headerView?.frame.origin.y = contentTop - (headerView?.frame.height ?? 0)
@@ -344,10 +376,6 @@ open class RollingView: UIScrollView {
 	// The offset of the zero index - from the user's perspective cells added to the top have negative indices
 	private var zeroIndexOffset = 0
 
-	// Our "hot" area calculated in validateVisibleRect()
-	private var topHotIndex = 0
-	private var bottomHotIndex = 0
-
 	private var contentTop: CGFloat { placeholders.first?.top ?? Self.MASTER_OFFSET }
 	private var contentBottom: CGFloat { placeholders.last?.bottom ?? Self.MASTER_OFFSET }
 	private var headerHeight: CGFloat { headerView?.frame.height ?? 0 }
@@ -374,7 +402,7 @@ open class RollingView: UIScrollView {
 				}
 		}
 
-		contentDidAddSpace(edge: edge)
+		updateContentLayout(edgeHint: edge)
 		validateVisibleRect()
 	}
 
@@ -389,7 +417,18 @@ open class RollingView: UIScrollView {
 		for i in (index + count)..<placeholders.count {
 			placeholders[i].moveBy(totalHeight)
 		}
-		contentDidAddSpace(edge: .bottom)
+		updateContentLayout(edgeHint: .bottom)
+		validateVisibleRect()
+	}
+
+
+	private func doRemoveCells(at index: Int, count: Int) {
+		for i in index..<(index + count) {
+			if let detachedCell = placeholders[i].detach() {
+				recyclePool.enqueue(detachedCell)
+			}
+		}
+		updateContentLayout(edgeHint: .bottom)
 		validateVisibleRect()
 	}
 
@@ -399,7 +438,7 @@ open class RollingView: UIScrollView {
 			recyclePool.enqueue(detachedCell)
 		}
 		placeholders[index].cellClass = cellClass
-		contentDidAddSpace(edge: .bottom)
+		updateContentLayout(edgeHint: .bottom)
 		validateVisibleRect()
 	}
 
@@ -426,7 +465,7 @@ open class RollingView: UIScrollView {
 				}
 			}
 		}
-		contentDidAddSpace(edge: .bottom)
+		updateContentLayout(edgeHint: .bottom)
 		validateVisibleRect()
 	}
 
@@ -436,14 +475,11 @@ open class RollingView: UIScrollView {
 			return
 		}
 
-		let rect = convert(bounds, to: contentView)
-
-		// TODO: skip if the change wasn't significant
-
 		// Certain number of screens should be kept "hot" in memory, e.g. for hotAreaFactor=1 half-screen above and half-screen below the visible area all objects should be available
+		let rect = convert(bounds, to: contentView)
 		let hotRect = rect.insetBy(dx: 0, dy: -(rect.height * hotAreaFactor / 2))
 
-		topHotIndex = max(0, placeholders.binarySearch(top: hotRect.minY) - 1)
+		let topHotIndex = max(0, placeholders.binarySearch(top: hotRect.minY) - 1)
 		var i = topHotIndex
 		repeat {
 			// Make sure the hot cell already exists or create a new one otherwise
@@ -456,8 +492,9 @@ open class RollingView: UIScrollView {
 				}
 			}
 			i += 1
-		} while i < placeholders.count && placeholders[i].bottom < hotRect.maxY
-		bottomHotIndex = i - 1
+		} while i < placeholders.count && placeholders[i].top < hotRect.maxY
+
+		let bottomHotIndex = i - 1
 
 		// Expand the hot area by warmCellCount more cells in both directions; everything beyond that can be removed and sent to the reuse pool
 		i = topHotIndex - warmCellCount / 2
@@ -482,13 +519,13 @@ open class RollingView: UIScrollView {
 			for i in 0...index {
 				placeholders[i].moveBy(-delta)
 			}
-			contentDidAddSpace(edge: .top)
+			updateContentLayout(edgeHint: .top)
 		}
 		else {
 			for i in (index + 1)..<placeholders.count {
 				placeholders[i].moveBy(delta)
 			}
-			contentDidAddSpace(edge: .bottom)
+			updateContentLayout(edgeHint: .bottom)
 		}
 		validateVisibleRect()
 	}
@@ -501,8 +538,6 @@ open class RollingView: UIScrollView {
 		placeholders = []
 		recyclePool.clear()
 		zeroIndexOffset = 0
-		topHotIndex = 0
-		bottomHotIndex = 0
 	}
 
 
