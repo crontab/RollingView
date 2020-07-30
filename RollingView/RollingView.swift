@@ -68,6 +68,11 @@ open class RollingView: UIScrollView {
 	}
 
 
+	public func preallocate(_ count: Int, cellClass: UIView.Type) {
+		recyclePool.preallocate(count, cellClass: cellClass)
+	}
+
+
 	/// Tell RollingView that cells should be added either on top or to the bottom of the existing content. Your `rollingView(_:reuseCell:forIndex:)` implementation may be called for some or all of the added cells.
 	public func addCells(edge: Edge, cellClass: UIView.Type, count: Int) {
 		guard count > 0 else {
@@ -506,7 +511,6 @@ open class RollingView: UIScrollView {
 		i = bottomHotIndex + warmCellCount / 2
 		while i < placeholders.count, let detachedCell = placeholders[i].detach() {
 			recyclePool.enqueue(detachedCell)
-			RLOG("RollingView: discarding at \(i - zeroIndexOffset)")
 			i += 1
 		}
 	}
@@ -546,21 +550,19 @@ open class RollingView: UIScrollView {
 	private class CommonPool {
 
 		func register(cellClass: UIView.Type, create: @escaping () -> UIView) {
-			let key = ObjectIdentifier(cellClass)
-			precondition(dict[key] == nil, "RollingView cell class \(cellClass) already registered")
-			dict[key] = Pool(create: create)
+			dict[ObjectIdentifier(cellClass)] = Pool(create: create)
+		}
+
+		func preallocate(_ count: Int, cellClass: UIView.Type) {
+			dict[ObjectIdentifier(cellClass)]!.preallocate(count)
 		}
 
 		func enqueue(_ element: UIView) {
-			let key = ObjectIdentifier(type(of: element))
-			precondition(dict[key] != nil, "RollingView cell class \(type(of: element)) not registered")
-			dict[key]!.enqueue(element)
+			dict[ObjectIdentifier(type(of: element))]!.enqueue(element)
 		}
 
 		func dequeue(cellClass: UIView.Type) -> UIView {
-			let key = ObjectIdentifier(cellClass)
-			precondition(dict[key] != nil, "RollingView cell class \(cellClass) not registered")
-			return dict[key]!.dequeueOrCreate()
+			return dict[ObjectIdentifier(cellClass)]!.dequeueOrCreate()
 		}
 
 		func clear() {
@@ -572,15 +574,22 @@ open class RollingView: UIScrollView {
 		private struct Pool {
 			var create: () -> UIView
 			var array: [UIView] = []
+			
+			mutating func preallocate(_ count: Int) {
+				while array.count < count {
+					array.append(create())
+					RLOG("RollingView: PREALLOC")
+				}
+			}
 
 			mutating func enqueue(_ element: UIView) {
 				array.append(element)
-				RLOG("RollingView: recycling cell, pool: \(array.count)")
+				RLOG("RollingView: recycling cell")
 			}
 
 			mutating func dequeueOrCreate() -> UIView {
 				if !array.isEmpty {
-					RLOG("RollingView: reusing cell, pool: \(array.count - 1)")
+					RLOG("RollingView: reusing cell")
 					return array.removeLast()
 				}
 				else {
@@ -671,4 +680,3 @@ private func RLOG(_ s: String) { print(s) }
 #else
 private func RLOG(_ s: String) { }
 #endif
-
