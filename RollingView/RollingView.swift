@@ -135,6 +135,12 @@ open class RollingView: UIScrollView {
 	}
 
 
+	/// Return all "live" cells in the hot area
+	public var visibleCells: [UIView] {
+		visibleCellIndices.compactMap { placeholders[$0].cell }
+	}
+
+
 	/// Remove all cells and empty the recycle pool. Header and footer views remain intact.
 	public func clear() {
 		clearContent()
@@ -475,18 +481,29 @@ open class RollingView: UIScrollView {
 	}
 
 
-	private func validateVisibleRect() {
-		guard let contentView = contentView, rollingViewDelegate != nil, !placeholders.isEmpty else {
-			return
+	private var visibleCellIndices: Range<Int> {
+		guard let contentView = contentView, !placeholders.isEmpty else {
+			return 0..<0
 		}
-
 		// Certain number of screens should be kept "hot" in memory, e.g. for hotAreaFactor=1 half-screen above and half-screen below the visible area all objects should be available
 		let rect = convert(bounds, to: contentView)
 		let hotRect = rect.insetBy(dx: 0, dy: -(rect.height * hotAreaFactor / 2))
-
 		let topHotIndex = max(0, placeholders.binarySearch(top: hotRect.minY) - 1)
 		var i = topHotIndex
 		repeat {
+			i += 1
+		} while i < placeholders.count && placeholders[i].top < hotRect.maxY
+		return topHotIndex..<i
+	}
+
+
+	private func validateVisibleRect() {
+		guard let contentView = contentView, rollingViewDelegate != nil else {
+			return
+		}
+
+		let range = visibleCellIndices
+		range.forEach { (i) in
 			// Make sure the hot cell already exists or create a new one otherwise
 			if placeholders[i].cell == nil {
 				let cell = recyclePool.dequeue(cellClass: placeholders[i].cellClass)
@@ -496,13 +513,13 @@ open class RollingView: UIScrollView {
 					cellAt(i, didChangeHeightBy: deltaHeight)
 				}
 			}
-			i += 1
-		} while i < placeholders.count && placeholders[i].top < hotRect.maxY
+		}
 
-		let bottomHotIndex = i - 1
+		let topHotIndex = range.startIndex
+		let bottomHotIndex = range.endIndex - 1
 
 		// Expand the hot area by warmCellCount more cells in both directions; everything beyond that can be removed and sent to the reuse pool
-		i = topHotIndex - warmCellCount / 2
+		var i = topHotIndex - warmCellCount / 2
 		while i >= 0, let detachedCell = placeholders[i].detach() {
 			recyclePool.enqueue(detachedCell)
 			i -= 1
@@ -574,7 +591,7 @@ open class RollingView: UIScrollView {
 		private struct Pool {
 			var create: () -> UIView
 			var array: [UIView] = []
-			
+
 			mutating func preallocate(_ count: Int) {
 				while array.count < count {
 					array.append(create())
