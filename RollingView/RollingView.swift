@@ -118,7 +118,7 @@ open class RollingView: UIScrollView {
 	public func setCount(_ newValue: Int, cellClass: UIView.Type, reload: Bool) {
 		let delta = newValue - placeholders.count
 		if delta < 0 {
-			removeCells(at: placeholders.count - zeroIndexOffset, count: -delta)
+			removeCells(at: newValue - zeroIndexOffset, count: -delta)
 		}
 		if reload {
 			self.reload()
@@ -439,6 +439,7 @@ open class RollingView: UIScrollView {
 				recyclePool.enqueue(detachedCell)
 			}
 		}
+		placeholders.removeSubrange(index..<(index + count))
 		updateContentLayout(edgeHint: .bottom)
 		validateVisibleRect()
 	}
