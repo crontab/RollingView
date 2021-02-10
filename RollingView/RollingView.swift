@@ -63,7 +63,7 @@ open class RollingView: UIScrollView {
 
 
 	/// Register a cell class along with its factory method create()
-	public func register(cellClass: UIView.Type, create: @escaping () -> UIView) {
+	public func register<T: UIView>(cellClass: T.Type, create: @escaping () -> T) {
 		recyclePool.register(cellClass: cellClass, create: create)
 	}
 
@@ -212,17 +212,11 @@ open class RollingView: UIScrollView {
 
 	/// Header view, similar to UITableView's
 	public var headerView: UIView? {
-		willSet {
-			if let headerView = headerView {
-				headerView.removeFromSuperview()
-				updateContentLayout(edgeHint: .top)
-			}
-		}
+		willSet { headerView.map { $0.removeFromSuperview() } }
 		didSet {
-			if let headerView = headerView {
-				headerView.frame.size.width = frame.width
-				contentView.addSubview(headerView)
-				updateContentLayout(edgeHint: .top)
+			headerView.map {
+				resizeComponent($0)
+				contentView.addSubview($0)
 			}
 		}
 	}
@@ -230,17 +224,11 @@ open class RollingView: UIScrollView {
 
 	/// Footer view, similar to UITableView's
 	public var footerView: UIView? {
-		willSet {
-			if let footerView = footerView {
-				footerView.removeFromSuperview()
-				updateContentLayout(edgeHint: .bottom)
-			}
-		}
+		willSet { footerView.map { $0.removeFromSuperview() } }
 		didSet {
-			if let footerView = footerView {
-				footerView.frame.size.width = frame.width
-				contentView.addSubview(footerView)
-				updateContentLayout(edgeHint: .bottom)
+			footerView.map {
+				resizeComponent($0)
+				contentView.addSubview($0)
 			}
 		}
 	}
@@ -249,6 +237,12 @@ open class RollingView: UIScrollView {
 	// MARK: - internal: scroller
 
 	private var contentView: UIView!
+
+
+	private func resizeComponent(_ view: UIView) {
+		let fittingSize = CGSize(width: contentView.frame.width, height: UIView.layoutFittingCompressedSize.height)
+		view.frame.size = view.systemLayoutSizeFitting(fittingSize, withHorizontalFittingPriority: .required, verticalFittingPriority: .defaultLow)
+	}
 
 
 	public override init(frame: CGRect) {
@@ -260,6 +254,19 @@ open class RollingView: UIScrollView {
 	public required init?(coder: NSCoder) {
 		super.init(coder: coder)
 		setup()
+	}
+
+
+	open override func layoutSubviews() {
+		super.layoutSubviews()
+
+		func resize(_ view: UIView, edge: Edge) {
+			resizeComponent(view)
+			updateContentLayout(edgeHint: edge)
+		}
+
+		headerView.map { resize($0, edge: .top) }
+		footerView.map { resize($0, edge: .bottom) }
 	}
 
 
@@ -277,7 +284,7 @@ open class RollingView: UIScrollView {
 				let offset = contentOffset.y + contentInset.top + safeAreaInsets.top
 				// Try to load more conent if the top of content is half a screen away
 				if offset < frame.height / 2 {
-					self.reachedEdge[Edge.top.rawValue] = true
+					self.reachedEdge[Edge.top.rawValue] = true // prevent reentrance
 					self.tryLoadMore(edge: .top)
 				}
 			}
@@ -292,8 +299,7 @@ open class RollingView: UIScrollView {
 
 	private func reuseCell(_ cell: UIView, forIndex index: Int) {
 		rollingViewDelegate?.rollingView(self, reuseCell: cell, forIndex: index - zeroIndexOffset)
-		let fittingSize = CGSize(width: contentView.frame.width, height: UIView.layoutFittingCompressedSize.height)
-		cell.frame.size = cell.systemLayoutSizeFitting(fittingSize, withHorizontalFittingPriority: .required, verticalFittingPriority: .defaultLow)
+		resizeComponent(cell)
 	}
 
 
@@ -303,8 +309,14 @@ open class RollingView: UIScrollView {
 
 
 	private func tryLoadMore(edge: Edge) {
-		rollingViewDelegate?.rollingView(self, reached: edge) { (hasMore) in
-			self.reachedEdge[edge.rawValue] = !hasMore
+		guard let delegate = rollingViewDelegate else {
+			reachedEdge[edge.rawValue] = false // try again later
+			return
+		}
+		DispatchQueue.main.async { [self] in
+			delegate.rollingView(self, reached: edge) { (hasMore) in
+				reachedEdge[edge.rawValue] = !hasMore
+			}
 		}
 	}
 
@@ -580,6 +592,7 @@ open class RollingView: UIScrollView {
 		}
 
 		func dequeue(cellClass: UIView.Type) -> UIView {
+			// A crash here means the class is not registered
 			return dict[ObjectIdentifier(cellClass)]!.dequeueOrCreate()
 		}
 
