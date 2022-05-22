@@ -290,6 +290,7 @@ open class RollingView: UIScrollView {
 
 	public override var contentOffset: CGPoint {
 		didSet {
+			// TODO: because contentOffset can change significanlty, validateVisibleRect() may leave cell instances intact where they are not needed. Need a better algorithm for freeing "cold" zones efficiently, i.e. avoiding iterating over the entire placeholder list.
 			validateVisibleRect()
 			guard skipEdgeChecks == 0 else {
 				return
