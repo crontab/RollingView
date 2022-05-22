@@ -54,7 +54,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 		let edge = RollingView.Edge(rawValue: sender.tag)!
 		let isCloseToBottom = rollingView.isCloseToBottom
 		let factory = factoryForEdge(edge)
-		rollingView.addCells(edge: edge, cellClass: factory, count: 1)
+		rollingView.addCells(edge: edge, cellClass: factory, count: 1, animated: edge == .bottom)
 		if edge == .bottom && isCloseToBottom {
 			rollingView.scrollToBottom(animated: true)
 		}
@@ -71,7 +71,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 		case .top:
 			completion(false)
 		case .bottom:
-			rollingView.addCells(edge: edge, cellClass: factoryForEdge(edge), count: 1)
+			rollingView.addCells(edge: edge, cellClass: factoryForEdge(edge), count: 1, animated: true)
 			completion(false)
 		}
 	}

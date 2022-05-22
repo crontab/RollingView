@@ -74,11 +74,11 @@ open class RollingView: UIScrollView {
 
 
 	/// Tell RollingView that cells should be added either on top or to the bottom of the existing content. Your `rollingView(_:reuseCell:forIndex:)` implementation may be called for some or all of the added cells.
-	public func addCells(edge: Edge, cellClass: UIView.Type, count: Int) {
+	public func addCells(edge: Edge, cellClass: UIView.Type, count: Int, animated: Bool) {
 		guard count > 0 else {
 			return
 		}
-		doAddCells(edge: edge, cellClass: cellClass, count: count)
+		doAddCells(edge: edge, cellClass: cellClass, count: count, animated: animated)
 	}
 
 
@@ -124,7 +124,7 @@ open class RollingView: UIScrollView {
 			self.reload()
 		}
 		if delta > 0 {
-			addCells(edge: .bottom, cellClass: cellClass, count: delta)
+			addCells(edge: .bottom, cellClass: cellClass, count: delta, animated: false)
 		}
 	}
 
@@ -423,7 +423,7 @@ open class RollingView: UIScrollView {
 	private var footerHeight: CGFloat { footerView?.frame.height ?? 0 }
 
 
-	private func doAddCells(edge: Edge, cellClass: UIView.Type, count: Int) {
+	private func doAddCells(edge: Edge, cellClass: UIView.Type, count: Int, animated: Bool) {
 		switch edge {
 
 			case .top:
@@ -432,14 +432,14 @@ open class RollingView: UIScrollView {
 				let totalHeight: CGFloat = estimatedCellHeight * CGFloat(count)
 				var top: CGFloat = contentTop - totalHeight
 				for _ in 0..<count {
-					newPlaceholders.append(Placeholder(cellClass: cellClass, top: top, height: estimatedCellHeight))
+					newPlaceholders.append(Placeholder(cellClass: cellClass, top: top, height: estimatedCellHeight, animated: animated))
 					top += estimatedCellHeight
 				}
 				placeholders.insert(contentsOf: newPlaceholders, at: 0)
 
 			case .bottom:
 				for _ in 0..<count {
-					placeholders.append(Placeholder(cellClass: cellClass, top: contentBottom, height: estimatedCellHeight))
+					placeholders.append(Placeholder(cellClass: cellClass, top: contentBottom, height: estimatedCellHeight, animated: animated))
 				}
 		}
 
@@ -451,7 +451,7 @@ open class RollingView: UIScrollView {
 	private func doInsertCells(at index: Int, cellClass: UIView.Type, count: Int) {
 		var top: CGFloat = placeholders.indices ~= (index - 1) ? placeholders[index - 1].bottom : contentTop
 		for i in index..<(index + count) {
-			placeholders.insert(Placeholder(cellClass: cellClass, top: top, height: estimatedCellHeight), at: i)
+			placeholders.insert(Placeholder(cellClass: cellClass, top: top, height: estimatedCellHeight, animated: false), at: i)
 			top += estimatedCellHeight
 		}
 		let totalHeight: CGFloat = estimatedCellHeight * CGFloat(count)
@@ -657,15 +657,17 @@ open class RollingView: UIScrollView {
 		var cellClass: UIView.Type
 		var top: CGFloat
 		var height: CGFloat
+		var animated: Bool // animate the first appearance only
 
 		var bottom: CGFloat {
 			return top + height
 		}
 
-		init(cellClass: UIView.Type, top: CGFloat, height: CGFloat) {
+		init(cellClass: UIView.Type, top: CGFloat, height: CGFloat, animated: Bool) {
 			self.cellClass = cellClass
 			self.top = top
 			self.height = height
+			self.animated = animated
 		}
 
 		mutating func attach(cell: UIView, toSuperview superview: UIView) -> CGFloat {
@@ -675,6 +677,11 @@ open class RollingView: UIScrollView {
 			let delta = cell.frame.size.height - height
 			height = cell.frame.size.height
 			superview.addSubview(cell)
+			if animated {
+				animated = false
+				cell.alpha = 0
+				UIView.animate(withDuration: 0.3, animations: { cell.alpha = 1 })
+			}
 			return delta
 		}
 
