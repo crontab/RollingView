@@ -16,23 +16,32 @@
         </placeholder>
         <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
         <view contentMode="scaleToFill" id="iN0-l3-epB" customClass="FooterView" customModule="RollingView" customModuleProvider="target">
-            <rect key="frame" x="0.0" y="0.0" width="320" height="54"/>
+            <rect key="frame" x="0.0" y="0.0" width="320" height="55"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
-                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="This is a footer. End of content." textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="eni-kW-SXv">
-                    <rect key="frame" x="60" y="23" width="202" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="This is a footer. End of content." textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="eni-kW-SXv">
+                    <rect key="frame" x="59" y="22" width="202" height="17"/>
                     <fontDescription key="fontDescription" type="system" pointSize="14"/>
                     <color key="textColor" systemColor="secondaryLabelColor"/>
                     <nil key="highlightedColor"/>
                 </label>
-                <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="tfH-hZ-qJJ">
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="tfH-hZ-qJJ">
                     <rect key="frame" x="0.0" y="8" width="320" height="2"/>
-                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                     <color key="backgroundColor" systemColor="secondarySystemBackgroundColor"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="2" id="ZXz-9M-lUB"/>
+                    </constraints>
                 </view>
             </subviews>
             <viewLayoutGuide key="safeArea" id="vUN-kp-3ea"/>
+            <constraints>
+                <constraint firstItem="tfH-hZ-qJJ" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" id="5Ev-sm-ZWi"/>
+                <constraint firstItem="vUN-kp-3ea" firstAttribute="bottom" secondItem="eni-kW-SXv" secondAttribute="bottom" constant="16" id="8b8-1L-ubs"/>
+                <constraint firstAttribute="trailing" secondItem="tfH-hZ-qJJ" secondAttribute="trailing" id="KJL-Zf-ilS"/>
+                <constraint firstItem="eni-kW-SXv" firstAttribute="top" secondItem="tfH-hZ-qJJ" secondAttribute="bottom" constant="12" id="dqF-5g-ZfK"/>
+                <constraint firstItem="eni-kW-SXv" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="eVQ-iw-FOu"/>
+                <constraint firstItem="tfH-hZ-qJJ" firstAttribute="top" secondItem="vUN-kp-3ea" secondAttribute="top" constant="8" id="qu9-8V-7pr"/>
+            </constraints>
             <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
             <point key="canvasLocation" x="138.75" y="-118.30985915492958"/>
         </view>
