@@ -30,24 +30,13 @@ class MainViewController: UIViewController, RollingViewDelegate {
 		rollingView.register(cellClass: LeftChatBubble.self, create: LeftChatBubble.create)
 		rollingView.register(cellClass: RightChatBubble.self, create: RightChatBubble.create)
 
-		rollingView.alwaysBounceVertical = true
-		// rollingView.showsVerticalScrollIndicator = false
+		rollingView.headerView = HeaderView.fromNib()
+		rollingView.footerView = FooterView.fromNib()
+
+		rollingView.contentInset.top = topBar.frame.height - view.safeAreaInsets.top
+		rollingView.contentInset.bottom = bottomBar.frame.height
+
 		rollingView.rollingViewDelegate = self
-	}
-
-
-	private var firstLayout = true
-
-	override func viewDidLayoutSubviews() {
-		super.viewDidLayoutSubviews()
-		if firstLayout {
-			firstLayout = false
-			// rollingView.fixedCellHeight = 42
-			rollingView.contentInset.top = topBar.frame.height - view.safeAreaInsets.top
-			rollingView.contentInset.bottom = bottomBar.frame.height
-			rollingView.headerView = HeaderView.fromNib()
-			rollingView.footerView = FooterView.fromNib()
-		}
 	}
 
 

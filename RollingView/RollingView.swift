@@ -379,9 +379,8 @@ open class RollingView: UIScrollView {
 				headerView?.frame.origin.y = contentTop - (headerView?.frame.height ?? 0)
 
 				// The magic part of RollingView: when extra space is added on top, contentView and contentSize are adjusted here to create an illusion of infinite expansion:
-				let delta = safeAreaInsets.top + contentInset.top + contentInset.bottom + safeAreaInsets.bottom + contentSize.height - bounds.height
-
 				// The below is to ensure that when new content is added on top, the scroller doesn't move visually (though it does in terms of relative coordinates). It gets a bit trickier when the overall size of content is smaller than the visual bounds, hence:
+				let delta = safeAreaInsets.top + contentInset.top + contentInset.bottom + safeAreaInsets.bottom + contentSize.height - bounds.height
 				contentOffset.y += max(0, min(addedHeight, delta))
 				contentView.frame.origin.y += addedHeight
 
