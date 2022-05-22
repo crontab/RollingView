@@ -212,11 +212,17 @@ open class RollingView: UIScrollView {
 
 	/// Header view, similar to UITableView's
 	public var headerView: UIView? {
-		willSet { headerView.map { $0.removeFromSuperview() } }
+		willSet {
+			headerView.map {
+				$0.removeFromSuperview()
+				updateContentLayout(edgeHint: .top)
+			}
+		}
 		didSet {
 			headerView.map {
 				resizeComponent($0)
 				contentView.addSubview($0)
+				updateContentLayout(edgeHint: .top)
 			}
 		}
 	}
@@ -224,11 +230,17 @@ open class RollingView: UIScrollView {
 
 	/// Footer view, similar to UITableView's
 	public var footerView: UIView? {
-		willSet { footerView.map { $0.removeFromSuperview() } }
+		willSet {
+			footerView.map {
+				$0.removeFromSuperview()
+				updateContentLayout(edgeHint: .bottom)
+			}
+		}
 		didSet {
 			footerView.map {
 				resizeComponent($0)
 				contentView.addSubview($0)
+				updateContentLayout(edgeHint: .bottom)
 			}
 		}
 	}
@@ -259,14 +271,12 @@ open class RollingView: UIScrollView {
 
 	open override func layoutSubviews() {
 		super.layoutSubviews()
-
-		func resize(_ view: UIView, edge: Edge) {
-			resizeComponent(view)
-			updateContentLayout(edgeHint: edge)
+		headerView.map {
+			resizeComponent($0)
 		}
-
-		headerView.map { resize($0, edge: .top) }
-		footerView.map { resize($0, edge: .bottom) }
+		footerView.map {
+			resizeComponent($0)
+		}
 	}
 
 
@@ -294,7 +304,7 @@ open class RollingView: UIScrollView {
 			}
 			// Also try to load more content at the bottom
 			if !reachedEdge[Edge.bottom.rawValue] && isCloseToBottom(within: frame.height / 2) {
-				reachedEdge[Edge.bottom.rawValue] = true
+				reachedEdge[Edge.bottom.rawValue] = true // prevent reentrance
 				tryLoadMore(edge: .bottom)
 			}
 		}
