@@ -9,7 +9,7 @@
 import UIKit
 
 
-public protocol RollingViewDelegate: class {
+public protocol RollingViewDelegate: AnyObject {
 
 	/// Set up a cell to be inserted into the RollingView object. This method is called either in response to your call to `addCells(...)` or when a cell is pulled from the recycle pool and needs to be set up for a given index position in the view. The class of the view is the same is when a cell was added using `addCells(...)` at a given position.
 	func rollingView(_ rollingView: RollingView, reuseCell: UIView, forIndex index: Int)
@@ -276,22 +276,26 @@ open class RollingView: UIScrollView {
 
 
 	private var reachedEdge = [false, false]
+	private var skipEdgeChecks: Int = 0
 
 	public override var contentOffset: CGPoint {
 		didSet {
 			validateVisibleRect()
+			guard skipEdgeChecks == 0 else {
+				return
+			}
 			if !reachedEdge[Edge.top.rawValue] {
 				let offset = contentOffset.y + contentInset.top + safeAreaInsets.top
 				// Try to load more conent if the top of content is half a screen away
 				if offset < frame.height / 2 {
-					self.reachedEdge[Edge.top.rawValue] = true // prevent reentrance
-					self.tryLoadMore(edge: .top)
+					reachedEdge[Edge.top.rawValue] = true // prevent reentrance
+					tryLoadMore(edge: .top)
 				}
 			}
 			// Also try to load more content at the bottom
 			if !reachedEdge[Edge.bottom.rawValue] && isCloseToBottom(within: frame.height / 2) {
-				self.reachedEdge[Edge.bottom.rawValue] = true
-				self.tryLoadMore(edge: .bottom)
+				reachedEdge[Edge.bottom.rawValue] = true
+				tryLoadMore(edge: .bottom)
 			}
 		}
 	}
@@ -314,7 +318,7 @@ open class RollingView: UIScrollView {
 			return
 		}
 		DispatchQueue.main.async { [self] in
-			delegate.rollingView(self, reached: edge) { (hasMore) in
+			delegate.rollingView(self, reached: edge) { [self] (hasMore) in
 				reachedEdge[edge.rawValue] = !hasMore
 			}
 		}
@@ -356,6 +360,11 @@ open class RollingView: UIScrollView {
 
 
 	private func updateContentLayout(edgeHint: Edge) {
+		skipEdgeChecks += 1
+		defer {
+			skipEdgeChecks -= 1
+		}
+
 		contentSize.width = frame.width
 		let newContentHeight = (contentBottom - contentTop) + headerHeight + footerHeight
 		let addedHeight = newContentHeight - contentSize.height
