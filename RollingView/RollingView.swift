@@ -68,7 +68,8 @@ open class RollingView: UIScrollView {
 	}
 
 
-	public func preallocate(_ count: Int, cellClass: UIView.Type) {
+	/// Preallocate a given number of cells of class `cellClass` to be reused later as necessary. The class should be registered prior to this using `register(cellClass:create:)`.
+	public func preallocate<T: UIView>(_ count: Int, cellClass: T.Type) {
 		recyclePool.preallocate(count, cellClass: cellClass)
 	}
 
@@ -149,12 +150,13 @@ open class RollingView: UIScrollView {
 	}
 
 
-	/// Tell RollingView to call your delegate method `rollingView(_:reuseCell:forIndex:)` on the cell at `index` if it's "hot", i.e. close or inside the visible area
+	/// Tell RollingView to call your delegate method `rollingView(_:reuseCell:forIndex:)` on the cell at `index` if it's instantiated and is warm, i.e. close or inside the visible area. In the delegate method, the cell has a chance to change its appearance and height.
 	public func reloadCell(at index: Int) {
 		doReloadCell(at: index + zeroIndexOffset)
 	}
 
 
+	/// Works like `reloadCell(at:)` on all currently instantiated cells in the warm area.
 	public func reload() {
 		doReloadAll()
 	}
@@ -271,6 +273,7 @@ open class RollingView: UIScrollView {
 
 	open override func layoutSubviews() {
 		super.layoutSubviews()
+		// TODO: this should re-layout all the living cells when the container width changes
 		headerView.map {
 			resizeComponent($0)
 		}
@@ -388,7 +391,7 @@ open class RollingView: UIScrollView {
 			case .top:
 				headerView?.frame.origin.y = contentTop - (headerView?.frame.height ?? 0)
 
-				// The magic part of RollingView: when extra space is added on top, contentView and contentSize are adjusted here to create an illusion of infinite expansion:
+				// The magic part of RollingView: when extra space is added on top, contentView and contentSize are adjusted here to create an illusion of infinite expansion.
 				// The below is to ensure that when new content is added on top, the scroller doesn't move visually (though it does in terms of relative coordinates). It gets a bit trickier when the overall size of content is smaller than the visual bounds, hence:
 				let delta = safeAreaInsets.top + contentInset.top + contentInset.bottom + safeAreaInsets.bottom + contentSize.height - bounds.height
 				contentOffset.y += max(0, min(addedHeight, delta))
@@ -501,16 +504,8 @@ open class RollingView: UIScrollView {
 
 	private func doReloadAll() {
 		for i in currentWarmRange {
-			if let cell = placeholders[i].cell {
-				reuseCell(cell, forIndex: i)
-				let delta = placeholders[i].update()
-				if delta != 0 {
-					cellDidChangeHeightAt(i, delta: delta)
-				}
-			}
+			doReloadCell(at: i)
 		}
-		updateContentLayout(edgeHint: .bottom)
-		validateVisibleRect()
 	}
 
 
