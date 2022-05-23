@@ -137,7 +137,7 @@ open class RollingView: UIScrollView {
 
 	/// Return all "live" cells in the hot area
 	public var visibleCells: [UIView] {
-		visibleCellIndices.compactMap { placeholders[$0].cell }
+		hotCellIndices.compactMap { placeholders[$0].cell }
 	}
 
 
@@ -290,7 +290,6 @@ open class RollingView: UIScrollView {
 
 	public override var contentOffset: CGPoint {
 		didSet {
-			// TODO: because contentOffset can change significanlty, validateVisibleRect() may leave cell instances intact where they are not needed. Need a better algorithm for freeing "cold" zones efficiently, i.e. avoiding iterating over the entire placeholder list.
 			validateVisibleRect()
 			guard skipEdgeChecks == 0 else {
 				return
@@ -413,10 +412,13 @@ open class RollingView: UIScrollView {
 	// MARK: - internal
 
 	private var recyclePool = CommonPool()
-	private var placeholders: [Placeholder] = []	// ordered by the `y` coordinate so that binarySearch() can be used on it
+	private var placeholders: [Placeholder] = [] // ordered by the `y` coordinate so that binarySearch() can be used on it
 
 	// The offset of the zero index - from the user's perspective cells added to the top have negative indices
 	private var zeroIndexOffset = 0
+
+	// Living cells may exist only inside this range:
+	private var currentWarmRange = 0..<0
 
 	private var contentTop: CGFloat { placeholders.first?.top ?? Self.MASTER_OFFSET }
 	private var contentBottom: CGFloat { placeholders.last?.bottom ?? Self.MASTER_OFFSET }
@@ -491,20 +493,19 @@ open class RollingView: UIScrollView {
 			reuseCell(cell, forIndex: index)
 			let delta = placeholders[index].update()
 			if delta != 0 {
-				cellAt(index, didChangeHeightBy: delta)
+				cellDidChangeHeightAt(index, delta: delta)
 			}
 		}
 	}
 
 
 	private func doReloadAll() {
-		// NOTE: this traverses the entire placeholders array. Although very few placeholders will have actual cells associated this is still not ideal.
-		for i in placeholders.indices {
+		for i in currentWarmRange {
 			if let cell = placeholders[i].cell {
 				reuseCell(cell, forIndex: i)
 				let delta = placeholders[i].update()
 				if delta != 0 {
-					cellAt(i, didChangeHeightBy: delta)
+					cellDidChangeHeightAt(i, delta: delta)
 				}
 			}
 		}
@@ -513,7 +514,7 @@ open class RollingView: UIScrollView {
 	}
 
 
-	private var visibleCellIndices: Range<Int> {
+	private var hotCellIndices: Range<Int> {
 		guard let contentView = contentView, !placeholders.isEmpty else {
 			return 0..<0
 		}
@@ -534,38 +535,36 @@ open class RollingView: UIScrollView {
 			return
 		}
 
-		let range = visibleCellIndices
-		range.forEach { (i) in
+		let hotRange = hotCellIndices
+
+		for i in hotRange {
 			// Make sure the hot cell already exists or create a new one otherwise
 			if placeholders[i].cell == nil {
 				let cell = recyclePool.dequeue(cellClass: placeholders[i].cellClass)
 				reuseCell(cell, forIndex: i)
 				let deltaHeight = placeholders[i].attach(cell: cell, toSuperview: contentView)
 				if deltaHeight != 0 {
-					cellAt(i, didChangeHeightBy: deltaHeight)
+					// TODO: this can cause multiple recursive calls to validateVisibleRect()
+					cellDidChangeHeightAt(i, delta: deltaHeight)
 				}
 			}
 		}
 
-		let topHotIndex = range.startIndex
-		let bottomHotIndex = range.endIndex - 1
+		// Expand the hot area by warmCellCount more cells in both directions; everything beyond that should be removed and sent to the reuse pool
+		let warmRange = max(0, hotRange.startIndex - warmCellCount / 2) ..< min(placeholders.count, hotRange.endIndex + warmCellCount / 2)
 
-		// Expand the hot area by warmCellCount more cells in both directions; everything beyond that can be removed and sent to the reuse pool
-		var i = topHotIndex - warmCellCount / 2
-		while i >= 0, let detachedCell = placeholders[i].detach() {
-			recyclePool.enqueue(detachedCell)
-			i -= 1
-		}
-
-		i = bottomHotIndex + warmCellCount / 2
-		while i < placeholders.count, let detachedCell = placeholders[i].detach() {
-			recyclePool.enqueue(detachedCell)
-			i += 1
+		if warmRange != currentWarmRange {
+			for i in currentWarmRange {
+				if !(warmRange ~= i), let detachedCell = placeholders[i].detach() {
+					recyclePool.enqueue(detachedCell)
+				}
+			}
+			currentWarmRange = warmRange
 		}
 	}
 
 
-	private func cellAt(_ index: Int, didChangeHeightBy delta: CGFloat) {
+	private func cellDidChangeHeightAt(_ index: Int, delta: CGFloat) {
 		precondition(delta != 0)
 		// If the cell in question is above the zero index, move all cells (or their placeholders) above it by delta, including the cell itself; otherwise move down cells that are below it. This is costly though maybe not so much given that there are only very few cells associated with placeholders at any given time.
 		if index < zeroIndexOffset {
@@ -580,7 +579,6 @@ open class RollingView: UIScrollView {
 			}
 			updateContentLayout(edgeHint: .bottom)
 		}
-		validateVisibleRect()
 	}
 
 
