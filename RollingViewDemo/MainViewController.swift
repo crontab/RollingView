@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import RollingView
 
 
 class HeaderView: UIView { }
