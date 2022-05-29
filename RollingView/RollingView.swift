@@ -134,7 +134,7 @@ open class RollingView: UIScrollView {
 
 	/// Return all "live" cells in the hot area
 	public var visibleCells: [UIView] {
-		hotCellIndices.compactMap { placeholders[$0].cell }
+		hotCellRange().compactMap { placeholders[$0].cell }
 	}
 
 
@@ -501,7 +501,7 @@ open class RollingView: UIScrollView {
 	}
 
 
-	private var hotCellIndices: Range<Int> {
+	private func hotCellRange() -> Range<Int> {
 		guard let contentView = contentView, !placeholders.isEmpty else {
 			return 0..<0
 		}
@@ -522,7 +522,8 @@ open class RollingView: UIScrollView {
 			return
 		}
 
-		let hotRange = hotCellIndices
+		// This can probably be optimized. Most of the time the change in contentOffset is insignificant and therefore the hot area indices don't change
+		let hotRange = hotCellRange()
 
 		for i in hotRange {
 			// Make sure the hot cell already exists or create a new one otherwise
@@ -553,10 +554,15 @@ open class RollingView: UIScrollView {
 
 	private func cellDidChangeHeightAt(_ index: Int, delta: CGFloat) {
 		precondition(delta != 0)
-		for i in (index + 1)..<placeholders.count {
-			placeholders[i].moveBy(delta)
+		if index == placeholders.count - 1 { // Last cell? Don't move anything
+			updateContentLayout(edgeHint: .bottom)
 		}
-		updateContentLayout(edgeHint: .bottom)
+		else {
+			for i in 0...index { // for the rest, move everything up, including the cell just created
+				placeholders[i].moveBy(-delta)
+			}
+			updateContentLayout(edgeHint: .top)
+		}
 	}
 
 
