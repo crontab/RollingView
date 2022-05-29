@@ -43,6 +43,7 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 	private let factories = [LeftChatBubble.self, RightChatBubble.self]
 	private var indexBounds = [0, 0] // this is just to keep the left/right bubble distribution
+	private var zeroIndex = 0
 
 
 	private func factoryForEdge(_ edge: RollingView.Edge) -> ChatBubble.Type {
@@ -55,6 +56,9 @@ class MainViewController: UIViewController, RollingViewDelegate {
 		let edge = RollingView.Edge(rawValue: sender.tag)!
 		let isCloseToBottom = rollingView.isCloseToBottom
 		let factory = factoryForEdge(edge)
+		if edge == .top {
+			zeroIndex += 1
+		}
 		rollingView.addCells(edge: edge, cellClass: factory, count: 1, animated: edge == .bottom)
 		if edge == .bottom && isCloseToBottom {
 			rollingView.scrollToBottom(animated: true)
@@ -63,7 +67,8 @@ class MainViewController: UIViewController, RollingViewDelegate {
 
 
 	func rollingView(_ rollingView: RollingView, reuseCell: UIView, forIndex index: Int) {
-		(reuseCell as! ChatBubble).text = "\(index). " + lines[abs(index) % lines.count]
+		let index = abs((index - zeroIndex) % lines.count)
+		(reuseCell as! ChatBubble).text = "\(index + 1). " + lines[index]
 	}
 
 

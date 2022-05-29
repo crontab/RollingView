@@ -13,7 +13,7 @@ The RollingView class itself is based on UIScrollView and generally behaves like
 
 And finally, RollingView is incredibly easy to use: you just need to implement two delegate methods to make it work:
 
-* `rollingView(_:reuseCell:forIndex:)` - modify the supplied cell object to be shown at a given index. Note that indices can be negative for content added upward.
+* `rollingView(_:reuseCell:forIndex:)` - modify the supplied cell object to be shown at a given index. Note that indices shift when you add cells at the top.
 * `rollingView(_:reached:completion:)` - optional; try to load more data and create cells accordingly, possibly asynchronously. `completion` takes a boolean parameter that indicates whether more attempts should be made for a given `edge` in the future.
 
 And use the following public methods to add content:

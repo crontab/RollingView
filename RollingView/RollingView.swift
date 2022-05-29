@@ -88,7 +88,7 @@ open class RollingView: UIScrollView {
 		guard count > 0 else {
 			return
 		}
-		doInsertCells(at: index + zeroIndexOffset, cellClass: cellClass, count: count)
+		doInsertCells(at: index, cellClass: cellClass, count: count)
 	}
 
 
@@ -97,13 +97,13 @@ open class RollingView: UIScrollView {
 		guard count > 0 else {
 			return
 		}
-		doRemoveCells(at: index + zeroIndexOffset, count: count)
+		doRemoveCells(at: index, count: count)
 	}
 
 
 	/// Replace a cell with another one at a given index, possibly of a different class and different height, too
 	public func replaceCell(at index: Int, cellClass: UIView.Type) {
-		doReplaceCell(at: index + zeroIndexOffset, cellClass: cellClass)
+		doReplaceCell(at: index, cellClass: cellClass)
 	}
 
 
@@ -111,15 +111,11 @@ open class RollingView: UIScrollView {
 	public var count: Int { placeholders.count }
 
 
-	/// Range of cell indices; the lower bound can be negative if some cells were added to the top edge
-	public var indices: Range<Int> { (-zeroIndexOffset)..<(placeholders.count - zeroIndexOffset) }
-
-
 	/// Set a new number of cells; cells can be added or removed depending on which way the value changes
 	public func setCount(_ newValue: Int, cellClass: UIView.Type, reload: Bool) {
 		let delta = newValue - placeholders.count
 		if delta < 0 {
-			removeCells(at: newValue - zeroIndexOffset, count: -delta)
+			removeCells(at: newValue, count: -delta)
 		}
 		if reload {
 			self.reload()
@@ -132,7 +128,7 @@ open class RollingView: UIScrollView {
 
 	/// Return a cell view at given index if it's "warm" in memory, or nil otherwise
 	public func cellAt(_ index: Int) -> UIView? {
-		return placeholders[index + zeroIndexOffset].cell
+		return placeholders[index].cell
 	}
 
 
@@ -152,7 +148,7 @@ open class RollingView: UIScrollView {
 
 	/// Tell RollingView to call your delegate method `rollingView(_:reuseCell:forIndex:)` on the cell at `index` if it's instantiated and is warm, i.e. close or inside the visible area. In the delegate method, the cell has a chance to change its appearance and height.
 	public func reloadCell(at index: Int) {
-		doReloadCell(at: index + zeroIndexOffset)
+		doReloadCell(at: index)
 	}
 
 
@@ -165,9 +161,9 @@ open class RollingView: UIScrollView {
 	/// Returns a cell index for given a point on screen in RollingView's coordinate space.
 	public func cellIndexFromPoint(_ point: CGPoint) -> Int? {
 		let point = convert(point, to: contentView)
-		let internalIndex = placeholders.binarySearch(top: point.y) - 1
-		if placeholders.indices ~= internalIndex && placeholders[internalIndex].containsPoint(point) {
-			return internalIndex - zeroIndexOffset
+		let index = placeholders.binarySearch(top: point.y) - 1
+		if placeholders.indices ~= index && placeholders[index].containsPoint(point) {
+			return index
 		}
 		return nil
 	}
@@ -175,7 +171,7 @@ open class RollingView: UIScrollView {
 
 	/// Returns a frame of a given cell index in RollingView's coordinates.
 	public func frameOfCell(at index: Int) -> CGRect {
-		let placeholder = placeholders[index + zeroIndexOffset]
+		let placeholder = placeholders[index]
 		let origin = convert(CGPoint(x: contentView.frame.origin.x, y: placeholder.top), from: contentView)
 		return CGRect(x: origin.x, y: origin.y, width: contentView.frame.width, height: placeholder.height)
 	}
@@ -315,7 +311,7 @@ open class RollingView: UIScrollView {
 
 
 	private func reuseCell(_ cell: UIView, forIndex index: Int) {
-		rollingViewDelegate?.rollingView(self, reuseCell: cell, forIndex: index - zeroIndexOffset)
+		rollingViewDelegate?.rollingView(self, reuseCell: cell, forIndex: index)
 		resizeComponent(cell)
 	}
 
@@ -350,7 +346,7 @@ open class RollingView: UIScrollView {
 	@objc private func onTap(_ sender: UITapGestureRecognizer) {
 		if sender.state == .ended {
 			if let index = cellIndexFromPoint(sender.location(in: self)) {
-				rollingViewDelegate?.rollingView(self, didSelectCell: placeholders[index + zeroIndexOffset].cell, atIndex: index)
+				rollingViewDelegate?.rollingView(self, didSelectCell: placeholders[index].cell, atIndex: index)
 			}
 		}
 	}
@@ -417,9 +413,6 @@ open class RollingView: UIScrollView {
 	private var recyclePool = CommonPool()
 	private var placeholders: [Placeholder] = [] // ordered by the `y` coordinate so that binarySearch() can be used on it
 
-	// The offset of the zero index - from the user's perspective cells added to the top have negative indices
-	private var zeroIndexOffset = 0
-
 	// Living cells may exist only inside this range:
 	private var currentWarmRange = 0..<0
 
@@ -433,7 +426,6 @@ open class RollingView: UIScrollView {
 		switch edge {
 
 			case .top:
-				zeroIndexOffset += count
 				var newPlaceholders: [Placeholder] = []
 				let totalHeight: CGFloat = estimatedCellHeight * CGFloat(count)
 				var top: CGFloat = contentTop - totalHeight
@@ -561,19 +553,10 @@ open class RollingView: UIScrollView {
 
 	private func cellDidChangeHeightAt(_ index: Int, delta: CGFloat) {
 		precondition(delta != 0)
-		// If the cell in question is above the zero index, move all cells (or their placeholders) above it by delta, including the cell itself; otherwise move down cells that are below it. This is costly though maybe not so much given that there are only very few cells associated with placeholders at any given time.
-		if index < zeroIndexOffset {
-			for i in 0...index {
-				placeholders[i].moveBy(-delta)
-			}
-			updateContentLayout(edgeHint: .top)
+		for i in (index + 1)..<placeholders.count {
+			placeholders[i].moveBy(delta)
 		}
-		else {
-			for i in (index + 1)..<placeholders.count {
-				placeholders[i].moveBy(delta)
-			}
-			updateContentLayout(edgeHint: .bottom)
-		}
+		updateContentLayout(edgeHint: .bottom)
 	}
 
 
@@ -583,7 +566,6 @@ open class RollingView: UIScrollView {
 		}
 		placeholders = []
 		recyclePool.clear()
-		zeroIndexOffset = 0
 	}
 
 
